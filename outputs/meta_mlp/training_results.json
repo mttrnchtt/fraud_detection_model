@@ -1,0 +1,54 @@
+{
+  "model_info": {
+    "hidden_layer_sizes": [
+      16,
+      8
+    ],
+    "activation": "relu",
+    "solver": "adam",
+    "learning_rate_init": 0.003,
+    "alpha": 0.0001,
+    "max_iter": 100,
+    "n_layers_": 4,
+    "n_outputs_": 1,
+    "classes_": [
+      0.0,
+      1.0
+    ]
+  },
+  "training_config": {
+    "pos_weight": 518.7,
+    "sample_weights_used": true,
+    "validation_split": null
+  },
+  "metrics": {
+    "train": {
+      "auroc": 0.9829523195660546,
+      "auprc": 0.875378836560505,
+      "accuracy": 0.9926968001685353,
+      "precision": 0.14444444444444443,
+      "recall": 0.9285714285714286,
+      "f1": 0.25
+    },
+    "val": null,
+    "test": {
+      "auroc": 0.9853036883199295,
+      "auprc": 0.7827416948285452,
+      "accuracy": 0.9949673462699843,
+      "precision": 0.1700404858299595,
+      "recall": 0.8076923076923077,
+      "f1": 0.2809364548494983
+    }
+  },
+  "data_info": {
+    "train_samples": 42721,
+    "val_samples": 0,
+    "test_samples": 42721,
+    "features": 6,
+    "class_balance_train": {
+      "positive": 56,
+      "negative": 42665,
+      "ratio": 761.875
+    }
+  }
+}

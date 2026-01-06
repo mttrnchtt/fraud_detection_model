@@ -1,0 +1,169 @@
+{
+    "config": {
+        "experiment": {
+            "name": "lightgbm_best",
+            "seed": 42
+        },
+        "paths": {
+            "processed_dir": "data_processed",
+            "train_features": "data_processed/X_train.npz",
+            "val_features": "data_processed/X_val.npz",
+            "test_features": "data_processed/X_test.npz",
+            "train_labels": "data_processed/y_train.npy",
+            "val_labels": "data_processed/y_val.npy",
+            "test_labels": "data_processed/y_test.npy",
+            "output_dir": "outputs/lightgbm",
+            "checkpoint_dir": "models/lightgbm"
+        },
+        "model": {
+            "objective": "binary",
+            "metric": "auc",
+            "boosting_type": "gbdt",
+            "n_jobs": -1,
+            "random_state": 42,
+            "learning_rate": 0.01,
+            "num_leaves": 255,
+            "max_depth": -1,
+            "min_child_samples": 100,
+            "subsample": 1.0,
+            "subsample_freq": 0,
+            "colsample_bytree": 0.7,
+            "reg_alpha": 0.1,
+            "reg_lambda": 1.0,
+            "scale_pos_weight": 518,
+            "n_estimators": 500
+        },
+        "training": {
+            "early_stopping_rounds": 50,
+            "verbose_eval": 50
+        },
+        "evaluation": {
+            "metrics": [
+                "auroc",
+                "auprc",
+                "accuracy",
+                "precision",
+                "recall",
+                "f1"
+            ],
+            "default_threshold": 0.5,
+            "alt_thresholds": [
+                0.1,
+                0.25,
+                0.5
+            ],
+            "threshold_metric": "f1"
+        },
+        "logging": {
+            "save_predictions": true,
+            "predictions_path": "outputs/lightgbm/preds",
+            "save_config_copy": true
+        },
+        "tuning": {
+            "n_iter": 100,
+            "param_grid": {
+                "learning_rate": [
+                    0.005,
+                    0.01,
+                    0.03,
+                    0.05,
+                    0.1
+                ],
+                "num_leaves": [
+                    31,
+                    63,
+                    127,
+                    255,
+                    511
+                ],
+                "max_depth": [
+                    -1,
+                    7,
+                    10,
+                    15,
+                    20
+                ],
+                "min_child_samples": [
+                    20,
+                    50,
+                    100
+                ],
+                "subsample": [
+                    0.6,
+                    0.7,
+                    0.8,
+                    0.9,
+                    1.0
+                ],
+                "subsample_freq": [
+                    0,
+                    1,
+                    5
+                ],
+                "colsample_bytree": [
+                    0.6,
+                    0.7,
+                    0.8,
+                    0.9,
+                    1.0
+                ],
+                "reg_alpha": [
+                    0,
+                    0.1,
+                    0.5,
+                    1,
+                    5,
+                    10
+                ],
+                "reg_lambda": [
+                    0,
+                    0.1,
+                    0.5,
+                    1,
+                    5,
+                    10
+                ],
+                "scale_pos_weight": [
+                    1,
+                    10,
+                    50,
+                    100,
+                    200,
+                    500
+                ]
+            }
+        }
+    },
+    "metrics": {
+        "test": {
+            "auroc": 0.9720455491917208,
+            "auprc": 0.7388328703907462,
+            "threshold_metrics": {
+                "threshold_0.1": {
+                    "auroc": 0.9720455491917208,
+                    "auprc": 0.7388328703907462,
+                    "accuracy": 0.9985019077268791,
+                    "precision": 0.43333333333333335,
+                    "recall": 0.75,
+                    "f1": 0.5492957746478874
+                },
+                "threshold_0.25": {
+                    "auroc": 0.9720455491917208,
+                    "auprc": 0.7388328703907462,
+                    "accuracy": 0.999227546171672,
+                    "precision": 0.6610169491525424,
+                    "recall": 0.75,
+                    "f1": 0.7027027027027027
+                },
+                "threshold_0.5": {
+                    "auroc": 0.9720455491917208,
+                    "auprc": 0.7388328703907462,
+                    "accuracy": 0.9993445846305096,
+                    "precision": 0.7222222222222222,
+                    "recall": 0.75,
+                    "f1": 0.7358490566037735
+                }
+            }
+        }
+    }
+}

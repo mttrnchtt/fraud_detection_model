@@ -1,0 +1,72 @@
+evaluation:
+  alt_thresholds:
+  - 0.1
+  - 0.25
+  - 0.5
+  default_threshold: 0.5
+  metrics:
+  - auroc
+  - auprc
+  - accuracy
+  - precision
+  - recall
+  - f1
+  threshold_metric: f1
+experiment:
+  name: mlp
+  seed: 1337
+logging:
+  log_interval: 50
+  predictions_path: outputs/mlp/preds
+  save_config_copy: true
+  save_predictions: true
+model:
+  activation: relu
+  bias: true
+  dropout:
+  - 0.2
+  - 0.2
+  - 0.0
+  hidden_dims:
+  - 256
+  - 128
+  - 64
+  input_dim: 32
+  output_activation: sigmoid
+  use_batchnorm: true
+optimizer:
+  betas:
+  - 0.9
+  - 0.999
+  lr: 0.01
+  name: adam
+  weight_decay: 0.0001
+paths:
+  checkpoint_dir: models/mlp
+  output_dir: outputs/mlp
+  processed_dir: data_processed
+  test_features: data_processed/X_test.npz
+  test_labels: data_processed/y_test.npy
+  train_features: data_processed/X_train.npz
+  train_labels: data_processed/y_train.npy
+  val_features: data_processed/X_val.npz
+  val_labels: data_processed/y_val.npy
+scheduler:
+  cooldown: 0
+  factor: 0.5
+  min_lr: 1.0e-06
+  monitor: val_auroc
+  name: reduce_on_plateau
+  patience: 3
+training:
+  accumulate_steps: 1
+  batch_size: 1024
+  class_balance: true
+  early_stopping:
+    mode: max
+    monitor: val_auprc
+    patience: 8
+  epochs: 200
+  grad_clip: 1.0
+  mixed_precision: false
+  pos_weight: 518.7
