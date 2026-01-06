@@ -1,0 +1,10 @@
+===== META MODEL LOGREG Option_A_wLGBM =====
+Models: ['mlp', 'xgb_w5', 'xgb_w10', 'xgb_w50', 'rf_s1', 'lgbm', 'lr_weighted', 'isolation_forest']
+AUPRC: 0.758762
+AUROC: 0.985453
+
+===== META MODEL LOGREG Option_B_wLGBM =====
+Models: ['mlp', 'xgb_w5', 'rf_s1', 'lgbm', 'lr_weighted', 'isolation_forest']
+AUPRC: 0.770976
+AUROC: 0.985522
+
