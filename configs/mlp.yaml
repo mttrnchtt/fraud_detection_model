@@ -1,0 +1,66 @@
+experiment:
+  name: mlp
+  seed: 1337
+
+paths:
+  processed_dir: data_processed
+  train_features: data_processed/X_train.npz
+  val_features: data_processed/X_val.npz
+  test_features: data_processed/X_test.npz
+  train_labels: data_processed/y_train.npy
+  val_labels: data_processed/y_val.npy
+  test_labels: data_processed/y_test.npy
+  output_dir: outputs/mlp
+  checkpoint_dir: models/mlp
+
+model:
+  input_dim: 32
+  hidden_dims: [256, 128, 64]
+  activation: relu
+  output_activation: sigmoid
+  dropout: [0.2, 0.2, 0.0]  # 20% of activators from each hidden layer are randomly turned off
+  use_batchnorm: true  # normalize activators inside the batch: BatchNorm keeps every layer’s activations centered (≈0 mean) and scaled (≈unit variance) during training.
+  bias: true
+
+optimizer:
+  name: adam  # formula: w_t+1​=w_t​−ηg but instead of g, use MA/EMA: w_t+1​=w_t​−η(hat{m}_t/(hat{v}_t+epsilon))
+  lr: 0.01
+  weight_decay: 0.0001  # L2 regularization, smaller weights, prevents overfitting, w_t+1​=w_t​−ηg_t​−ηλw_t​
+  betas: [0.9, 0.999]  # beta1 and beta2 for MA/EMA, 0.9 for momentum, 0.999 for RMSProp
+# hat{m}_t = beta1 * hat{m}_{t-1} + (1 - beta1) * g_t
+# hat{v}_t = beta2 * hat{v}_{t-1} + (1 - beta2) * g_t^2
+
+scheduler:
+  name: reduce_on_plateau  # reduce learning rate when the validation loss plateaus
+  factor: 0.5  # reduce learning rate by factor
+  patience: 3  # number of epochs to wait before reducing learning rate
+  cooldown: 0  # number of epochs to wait before resuming training
+  min_lr: 0.000001  # minimum learning rate
+  monitor: val_auroc  # monitor validation AUROC
+
+training:
+  epochs: 200
+  batch_size: 1024
+  accumulate_steps: 1  # accumulate gradients over multiple steps before updating weights
+  grad_clip: 1.0  # max gradient magnitude
+  pos_weight: 518.7  # class imbalance factor
+  class_balance: true
+  mixed_precision: false  # auto prcesision / optimized
+  early_stopping:  # stop training when the validation loss plateaus
+    monitor: val_auprc  # monitor validation AUPRC (better for imbalanced data)
+    mode: max  # maximize the metric
+    patience: 8  # number of epochs to wait before stopping training
+
+evaluation:
+  metrics: [auroc, auprc, accuracy, precision, recall, f1]
+  default_threshold: 0.5
+  alt_thresholds: [0.1, 0.25, 0.5]
+  threshold_metric: f1
+
+logging:
+  log_interval: 50
+  save_predictions: true
+  predictions_path: outputs/mlp/preds
+  save_config_copy: true
+
+

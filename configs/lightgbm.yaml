@@ -1,0 +1,69 @@
+experiment:
+  name: lightgbm_best
+  seed: 42
+
+paths:
+  processed_dir: data_processed
+  train_features: data_processed/X_train.npz
+  val_features: data_processed/X_val.npz
+  test_features: data_processed/X_test.npz
+  train_labels: data_processed/y_train.npy
+  val_labels: data_processed/y_val.npy
+  test_labels: data_processed/y_test.npy
+  output_dir: outputs/lightgbm
+  checkpoint_dir: models/lightgbm
+
+model:
+  objective: binary
+  metric: auc
+  boosting_type: gbdt
+  n_jobs: -1
+  random_state: 42
+
+  # 🔒 Best hyperparameters from tuning
+  learning_rate: 0.01
+  num_leaves: 255
+  max_depth: -1
+  min_child_samples: 100
+
+  subsample: 1.0          # no row subsampling
+  subsample_freq: 0       # no subsample frequency
+
+  colsample_bytree: 0.7   # feature subsampling
+
+  reg_alpha: 0.1          # L1
+  reg_lambda: 1.0         # L2
+
+  scale_pos_weight: 518
+
+  # tree count: set reasonably high, rely on early stopping
+  n_estimators: 500       # best iteration was 45, so 500 is more than enough
+
+training:
+  early_stopping_rounds: 50
+  verbose_eval: 50
+
+evaluation:
+  metrics: [auroc, auprc, accuracy, precision, recall, f1]
+  default_threshold: 0.5
+  alt_thresholds: [0.1, 0.25, 0.5]
+  threshold_metric: f1
+
+logging:
+  save_predictions: true
+  predictions_path: outputs/lightgbm/preds
+  save_config_copy: true
+
+tuning:
+  n_iter: 100
+  param_grid:
+    learning_rate: [0.005, 0.01, 0.03, 0.05, 0.1]
+    num_leaves: [31, 63, 127, 255, 511]
+    max_depth: [-1, 7, 10, 15, 20]
+    min_child_samples: [20, 50, 100]
+    subsample: [0.6, 0.7, 0.8, 0.9, 1.0]
+    subsample_freq: [0, 1, 5]
+    colsample_bytree: [0.6, 0.7, 0.8, 0.9, 1.0]
+    reg_alpha: [0, 0.1, 0.5, 1, 5, 10]
+    reg_lambda: [0, 0.1, 0.5, 1, 5, 10]
+    scale_pos_weight: [1, 10, 50, 100, 200, 500] # Handling imbalance

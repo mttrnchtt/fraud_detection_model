@@ -1,0 +1,69 @@
+LR_model:
+  iterations: 1000
+  learning_rate: 0.01
+
+experiment:
+  name: meta_mlp
+  seed: 1337
+
+paths:
+  processed_dir: data_processed
+  # you will feed stacked features from your stacking script, so these may not be used directly
+  train_features: data_processed/X_val.npz
+  test_features: data_processed/X_test.npz
+  train_labels: data_processed/y_val.npy
+  test_labels: data_processed/y_test.npy
+  output_dir: outputs/meta_mlp
+  checkpoint_dir: models/meta_mlp
+  report: reports/meta_model.txt
+
+model:
+  # set this to: number_of_layer0_models + (# anomaly features you add, e.g. IF, AE, etc.)
+  # e.g. Option A: 6 probs (mlp, xgb_w5, xgb_w10, xgb_w50, rf_s1, lr_weighted)
+  # + 1 IF + 1 LightGBM = 8
+  input_dim: 8
+  hidden_dims: [16, 8]       # small network, enough for interactions
+  activation: relu
+  output_activation: sigmoid
+  dropout: [0.1, 0.0]        # light dropout; you can also set [0.0, 0.0]
+  use_batchnorm: true
+  bias: true
+
+optimizer:
+  name: adam
+  lr: 0.005                 # smaller LR than layer-0 (0.01)
+  weight_decay: 0.0001      # same L2 is fine
+  betas: [0.9, 0.999]
+
+scheduler:
+  name: reduce_on_plateau
+  factor: 0.5
+  patience: 3
+  cooldown: 0
+  min_lr: 0.000001
+  monitor: val_auprc        # now directly monitor AUPRC on meta-val
+
+training:
+  epochs: 100               # you don't need 200 here
+  batch_size: 2048          # val/meta set is ~42k → 2048 works nicely
+  accumulate_steps: 1
+  grad_clip: 1.0
+  pos_weight: 518.7         # same imbalance ratio
+  class_balance: true
+  mixed_precision: false
+  early_stopping:
+    monitor: val_auprc
+    mode: max
+    patience: 8
+
+evaluation:
+  metrics: [auroc, auprc, accuracy, precision, recall, f1]
+  default_threshold: 0.5
+  alt_thresholds: [0.1, 0.25, 0.5]
+  threshold_metric: f1
+
+logging:
+  log_interval: 20
+  save_predictions: true
+  predictions_path: outputs/meta_mlp/preds
+  save_config_copy: true

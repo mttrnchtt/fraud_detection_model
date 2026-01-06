@@ -1,0 +1,43 @@
+experiment:
+  name: isolation_forest
+  seed: 42
+
+paths:
+  processed_dir: data_processed
+  train_features: data_processed/X_train.npz
+  val_features: data_processed/X_val.npz
+  test_features: data_processed/X_test.npz
+  train_labels: data_processed/y_train.npy
+  val_labels: data_processed/y_val.npy
+  test_labels: data_processed/y_test.npy
+  output_dir: outputs/isolation_forest
+  checkpoint_dir: models/isolation_forest
+
+model:
+  n_estimators: 300
+  contamination: 0.001
+  max_samples: "auto"
+  max_features: 1.0
+  bootstrap: false
+  n_jobs: -1
+  random_state: 42
+
+tuning:
+  n_iter: 20  # Number of random search iterations
+  param_grid:
+    n_estimators: [100, 200, 300, 400, 500]
+    contamination: [0.0001, 0.0005, 0.001, 0.005, 0.01, "auto"]
+    max_samples: ["auto", 0.5, 0.75, 1.0]
+    max_features: [0.5, 0.75, 1.0]
+    bootstrap: [true, false]
+
+evaluation:
+  metrics: [auroc, auprc, accuracy, precision, recall, f1]
+  default_threshold: 0.5
+  alt_thresholds: [0.1, 0.25, 0.5]
+  threshold_metric: f1
+
+logging:
+  save_predictions: true
+  predictions_path: outputs/isolation_forest/preds
+  save_config_copy: true
