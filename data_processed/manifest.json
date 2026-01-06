@@ -1,0 +1,69 @@
+{
+  "splits": {
+    "train": 199365,
+    "val": 42721,
+    "test": 42721
+  },
+  "features": [
+    "time_days_z",
+    "tod_sin",
+    "tod_cos",
+    "Amount",
+    "V1",
+    "V2",
+    "V3",
+    "V4",
+    "V5",
+    "V6",
+    "V7",
+    "V8",
+    "V9",
+    "V10",
+    "V11",
+    "V12",
+    "V13",
+    "V14",
+    "V15",
+    "V16",
+    "V17",
+    "V18",
+    "V19",
+    "V20",
+    "V21",
+    "V22",
+    "V23",
+    "V24",
+    "V25",
+    "V26",
+    "V27",
+    "V28"
+  ],
+  "normalized_features": [
+    "time_days_z",
+    "tod_sin",
+    "tod_cos",
+    "Amount"
+  ],
+  "shapes": {
+    "X_train": [
+      199365,
+      32
+    ],
+    "X_val": [
+      42721,
+      32
+    ],
+    "X_test": [
+      42721,
+      32
+    ]
+  },
+  "class_balance": {
+    "train_pos": 384,
+    "train_neg": 198981,
+    "val_pos": 56,
+    "val_neg": 42665,
+    "test_pos": 52,
+    "test_neg": 42669
+  }
+}
