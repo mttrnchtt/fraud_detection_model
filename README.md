@@ -1,3 +1,4 @@
+fyi: this is a group work with my friend - Aruzhan:)
 # Credit Card Fraud Detection – Stacking Ensemble
 
 This project implements a **time-aware credit card fraud detector** using the [Kaggle Credit Card Fraud Detection dataset](https://www.kaggle.com/datasets/mlg-ulb/creditcardfraud).
