@@ -1,14 +1,49 @@
+"""Stacking layer-0 helpers.
+
+Anti-leakage contract. The meta-model is trained on layer-0 scores of a window
+the base models never saw during training, which is the validation split. The
+test split is scored exactly once at the very end, for the reported numbers only.
+Which base learners go into a layer-0 option is decided by validation AUPRC, never
+by test (see reports/layer0.txt and scripts/select_layer0.py).
+
+assert_meta_source_is_holdout guards this at runtime, so a mis-pointed config such
+as train_features: X_train.npz fails loudly instead of leaking quietly.
+"""
+
+import os
+
 import numpy as np
-import sklearn
 import joblib
 
+from fd.common import set_seed  # re-exported for backwards compatibility
 
-def set_seed(seed: int):
+__all__ = [
+    "set_seed",
+    "assert_meta_source_is_holdout",
+    "load_npz_data",
+    "load_npy_data",
+    "load_all_data",
+    "split_meta_data",
+    "run_layer0",
+    "OPTIONS",
+]
+
+
+def assert_meta_source_is_holdout(path: str) -> None:
+    """Fail fast if the meta-model would be trained on the base-learner train split.
+
+    The meta-model must learn from layer-0 scores on a held-out window (the
+    validation split), not the split the base learners were fit on. We refuse the
+    obvious leakage case where ``train_features`` points at ``X_train.*``.
     """
-    Sets the seed for reproducibility.
-    """
-    np.random.seed(seed)
-    sklearn.utils.check_random_state(seed)
+    base = os.path.basename(str(path)).lower()
+    if base.startswith("x_train"):
+        raise ValueError(
+            f"Refusing to train the meta-model on {path!r}: stacking requires a "
+            "held-out source (e.g. data_processed/X_val.npz). Point "
+            "paths.train_features at the validation split, not the layer-0 "
+            "training split."
+        )
 
 
 def load_npz_data(path: str) -> np.ndarray:
@@ -92,13 +127,17 @@ def run_layer0(layer0_config: dict[str, str], X: np.ndarray) -> np.ndarray:
     return np.column_stack(preds)
 
 
+# Layer-0 model sets. Members are chosen by VALIDATION AUPRC (see
+# scripts/select_layer0.py -> reports/layer0.txt), never by test. Option A is the
+# broad set (diverse XGB weights); Option B is the compact set; the *_wLGBM
+# variants add the LightGBM booster.
 layer0_option_A = {
-    'mlp': 'models/mlp/model.joblib',                      # Rank 1: 0.777
-    'xgb_w5': 'models/xgb_weighted_w5/model.joblib',      # Rank 2: 0.771
-    'xgb_w10': 'models/xgb_weighted_w10/model.joblib',    # Rank 3: 0.769
-    'xgb_w50': 'models/xgb_weighted_w50/model.joblib',    # Rank 4: 0.765
-    'rf_s1': 'models/rf_balanced_s1.0/model.joblib',      # Rank 5: 0.763
-    'lr_weighted': 'models/lr_weighted/model.joblib',     # Rank 12: 0.690
+    'mlp': 'models/mlp/model.joblib',
+    'xgb_w5': 'models/xgb_weighted_w5/model.joblib',
+    'xgb_w10': 'models/xgb_weighted_w10/model.joblib',
+    'xgb_w50': 'models/xgb_weighted_w50/model.joblib',
+    'rf_s1': 'models/rf_balanced_s1.0/model.joblib',
+    'lr_weighted': 'models/lr_weighted/model.joblib',
     'isolation_forest': 'models/isolation_forest/model.joblib',
 }
 
@@ -111,13 +150,13 @@ layer0_option_B = {
 }
 
 layer0_option_A_wLGBM = {
-    'mlp': 'models/mlp/model.joblib',                      # Rank 1: 0.777
-    'xgb_w5': 'models/xgb_weighted_w5/model.joblib',      # Rank 2: 0.771
-    'xgb_w10': 'models/xgb_weighted_w10/model.joblib',    # Rank 3: 0.769
-    'xgb_w50': 'models/xgb_weighted_w50/model.joblib',    # Rank 4: 0.765
-    'rf_s1': 'models/rf_balanced_s1.0/model.joblib',      # Rank 5: 0.763
+    'mlp': 'models/mlp/model.joblib',
+    'xgb_w5': 'models/xgb_weighted_w5/model.joblib',
+    'xgb_w10': 'models/xgb_weighted_w10/model.joblib',
+    'xgb_w50': 'models/xgb_weighted_w50/model.joblib',
+    'rf_s1': 'models/rf_balanced_s1.0/model.joblib',
     'lgbm': 'models/lightgbm/model.joblib',
-    'lr_weighted': 'models/lr_weighted/model.joblib',     # Rank 12: 0.690
+    'lr_weighted': 'models/lr_weighted/model.joblib',
     'isolation_forest': 'models/isolation_forest/model.joblib',
 }
 
@@ -128,4 +167,12 @@ layer0_option_B_wLGBM = {
     'lgbm': 'models/lightgbm/model.joblib',
     'lr_weighted': 'models/lr_weighted/model.joblib',
     'isolation_forest': 'models/isolation_forest/model.joblib',
+}
+
+# Name -> layer-0 set, so scripts can select an option by string.
+OPTIONS = {
+    "A": layer0_option_A,
+    "B": layer0_option_B,
+    "A_wLGBM": layer0_option_A_wLGBM,
+    "B_wLGBM": layer0_option_B_wLGBM,
 }
