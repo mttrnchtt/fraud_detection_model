@@ -26,11 +26,7 @@ against the saved files under `outputs/` by `scripts/check_readme_metrics.py`.
 | Logistic Regression, weighted         | 0.9772 | 0.6897 |
 | Isolation Forest (unsupervised)       | 0.9371 | 0.0542 |
 
-Here is the honest read of that table. The MLP combiner comes out a little ahead of the best
-single model on both scores. The linear combiner lands right next to the best single model rather
-than clearly beating it. So stacking buys a small gain here that depends on which combiner you use,
-not a dramatic jump. Because frauds are so rare, the number that matters is AUPRC, not accuracy and
-not AUROC. A model that flags nothing at all is still 99.83 percent accurate and completely useless.
+The MLP combiner comes out a little ahead of the best single model on both scores. The linear combiner lands right next to the best single model rather than clearly beating it. So stacking buys a small gain here that depends on which combiner you use. Because frauds are so rare, the number that matters is AUPRC, not accuracy and not AUROC. A model that flags nothing at all is still 99.83 percent accurate and completely useless.
 
 ## Why the split and the sampling matter
 
