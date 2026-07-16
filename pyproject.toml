@@ -1,0 +1,37 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "fraud-detection-model"
+version = "0.1.0"
+description = "Credit-card fraud detection with a time-honest stacking ensemble"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+dependencies = [
+    "numpy",
+    "pandas",
+    "scipy",
+    "scikit-learn",
+    "xgboost",
+    "lightgbm",
+    "imbalanced-learn",
+    "matplotlib",
+    "PyYAML",
+    "joblib",
+    "tqdm",
+    "kagglehub",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8"]
+
+# src-layout: the import package is `fd`, living under src/.
+# `pip install -e .` makes `import fd` work from anywhere, so scripts need no
+# sys.path hacks and can be run as `python scripts/<name>.py` from the repo root.
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
