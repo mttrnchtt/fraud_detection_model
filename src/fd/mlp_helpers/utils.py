@@ -4,14 +4,10 @@
 # load_all_data(config) - loads all train/val/test data
 
 import numpy as np
-import sklearn
 
-def set_seed(seed: int):
-    """
-    Sets the seed for reproducibility.
-    """
-    np.random.seed(seed)
-    sklearn.utils.check_random_state(seed)
+from fd.common import set_seed  # re-exported for backwards compatibility
+
+__all__ = ["set_seed", "load_npz_data", "load_npy_data", "load_all_data"]
 
 
 def load_npz_data(path: str) -> np.ndarray:
