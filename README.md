@@ -1,59 +1,91 @@
-# Credit Card Fraud Detection — Stacking Ensemble
+# Credit Card Fraud Detection with a Stacking Ensemble
 
-A fraud detector for credit card transactions built to behave like a production system: it never looks into the future, it keeps the real fraud rate untouched, and it combines several different model families through stacking to squeeze out precision on an extremely rare positive class.
+This project flags fraudulent credit card transactions. It is put together the way a real
+deployment has to work. It never trains on transactions from the future, it keeps the true fraud
+rate instead of resampling it away, and it picks which model to ship using a validation window so
+the test window can be scored a single time at the very end.
 
-Dataset: [Kaggle Credit Card Fraud Detection](https://www.kaggle.com/datasets/mlg-ulb/creditcardfraud) — 284,807 transactions, 492 of them fraudulent (0.17%).
+The data is the [Kaggle Credit Card Fraud dataset](https://www.kaggle.com/datasets/mlg-ulb/creditcardfraud),
+284,807 transactions with 492 frauds, which is about 0.17 percent.
 
 ## Results
 
-Final numbers on the held-out test window (the last 15% of transactions in time):
+Every number below is on the held out test window, meaning the last 15 percent of transactions in
+time. The test set is scored once, by `eval_stack.py`, after the layer-0 set and the meta-model
+have already been chosen on validation. All of it is reproducible with `make all` and is checked
+against the saved files under `outputs/` by `scripts/check_readme_metrics.py`.
 
-| Model | AUROC | AUPRC |
-|---|---|---|
-| **Stacking, meta-LR** | **0.9857** | 0.7848 |
-| Stacking, meta-MLP (compact) | 0.9836 | **0.7865** |
-| MLP (best single model) | ~0.983 | ~0.777 |
-| XGBoost, weighted (w=5) | — | ~0.771 |
-| Balanced Random Forest | — | ~0.763 |
-| LightGBM | — | ~0.739 |
-| Logistic Regression | — | ~0.690 |
+| Model (test set, scored once)         | AUROC  | AUPRC  |
+|---------------------------------------|--------|--------|
+| Stacking, meta-MLP (B_wLGBM)          | 0.9886 | 0.7746 |
+| Stacking, meta-LR (B_wLGBM)           | 0.9880 | 0.7640 |
+| XGBoost, weighted (w=5), best single  | 0.9808 | 0.7657 |
+| Balanced Random Forest (s=1.0)        | 0.9826 | 0.7471 |
+| LightGBM                              | 0.9713 | 0.7381 |
+| MLP                                   | 0.9841 | 0.7234 |
+| Logistic Regression, weighted         | 0.9772 | 0.6897 |
+| Isolation Forest (unsupervised)       | 0.9371 | 0.0542 |
 
-The point of the table is not the top number on its own. It is that stacking beats every individual model, and it does so because the base learners make *different* mistakes.
+Here is the honest read of that table. The MLP combiner comes out a little ahead of the best
+single model on both scores. The linear combiner lands right next to the best single model rather
+than clearly beating it. So stacking buys a small gain here that depends on which combiner you use,
+not a dramatic jump. Because frauds are so rare, the number that matters is AUPRC, not accuracy and
+not AUROC. A model that flags nothing at all is still 99.83 percent accurate and completely useless.
 
-## Why the setup matters
+## Why the split and the sampling matter
 
-Most fraud tutorials quietly cheat in one of two ways, and both inflate the score:
+Two shortcuts show up in a lot of fraud tutorials, and both make the score look better than it is.
 
-**Random train/test splits.** If you shuffle transactions before splitting, the model trains on transactions that happened after the ones it is tested on. That is future leakage, and it will not survive contact with production. Here the data is split strictly by time:
+The first is a random train and test split. Shuffle before you split and the model ends up
+training on transactions that happened after the ones it is later tested on. That is leakage from
+the future and it does not survive contact with production. Here the split is strictly by time.
 
-- Train (first 70%) — trains the base models
-- Validation (next 15%) — tunes base models and trains the meta-model
-- Test (final 15%) — touched exactly once, for the numbers above
+- Train, the first 70 percent, fits the base models.
+- Validation, the next 15 percent, ranks the base models and trains and selects the meta-model.
+- Test, the final 15 percent, is scored once for the numbers above.
 
-**Resampling the classes.** Oversampling fraud or undersampling the rest makes training easier but reports a fraud rate the model will never see live. Here the real 0.17% is preserved everywhere, and class imbalance is handled inside the models (class weights, balanced sampling) rather than by rewriting the dataset.
+The second shortcut is resampling the classes. Oversampling the frauds or undersampling everything
+else makes training easier but reports a fraud rate the model will never meet in production. Here
+the real 0.17 percent is kept everywhere, and the imbalance is handled inside the models with class
+weights and balanced sampling.
 
-Because positives are so rare, the headline metric is **AUPRC**, not accuracy or AUROC. A model that flags nothing is 99.83% accurate and completely useless.
+There is a third, quieter shortcut that this project takes care to avoid. Choosing which base models
+to keep by looking at their test scores is itself a kind of leakage. Here the base models are ranked
+by validation AUPRC in `scripts/select_layer0.py`, which writes `reports/layer0.txt`, and a guard
+called `assert_meta_source_is_holdout` refuses to train the meta-model on the base training split.
 
 ## How it works
 
-**Layer 0 — base learners.** Six model families, chosen to disagree with each other:
+Layer 0 is a set of base models picked so they make different kinds of mistakes.
 
-- MLP — nonlinear boundaries
-- XGBoost — gradient-boosted trees, weighted toward the fraud class
-- Balanced Random Forest — bagging with balanced subsampling
-- LightGBM — leaf-wise boosting
-- Logistic Regression — a linear baseline worth keeping
-- Isolation Forest — unsupervised anomaly score, the only model that never sees a label
+- MLP, for nonlinear boundaries
+- XGBoost, weighted toward the fraud class
+- Balanced Random Forest, with balanced subsampling
+- LightGBM
+- Logistic Regression, a linear baseline worth keeping
+- Isolation Forest, an unsupervised anomaly score and the only model that never sees a label
 
-**Layer 1 — meta-model.** The base models score the validation and test windows, and those scores become the features for a small meta-model (logistic regression or a compact MLP) that learns how to weigh them. Stacking helps here precisely because the base models are heterogeneous — a linear combiner on top of near-identical models would gain nothing.
+Layer 1 is the meta-model. The base models score the validation window. Those scores are put on a
+common scale first, which matters because the tree and linear models output probabilities while the
+Isolation Forest outputs an unbounded anomaly score. The scaled scores become the features for a
+small meta-model, either a logistic regression or a compact MLP, trained on validation. The frozen
+meta-model then scores the test window once. Stacking earns its keep here because the base models
+disagree with each other. A combiner sitting on top of near identical models would gain nothing.
 
-## Repository layout
+## Layout
 
 ```
-scripts/     runnable steps: prepare data, train each base model, build and evaluate the stack
-src/fd/      shared code, organized per model (data_prep, rf_helpers, mlp_helpers, stack_helpers)
-outputs/     saved training_results.json for every model variant
+scripts/     one step per file, each run as `python scripts/<name>.py` from the repo root
+src/fd/      the importable package: data_prep, mlp_helpers, stack_helpers, common
+configs/     one YAML per step
+outputs/     saved metrics per model and per stack option, tracked in git
+reports/     layer0.txt (validation ranking), meta_model.txt (test), ensemble_report.txt
+tests/       pytest suite for the feature pipeline and the leakage guards
+exploratory/ older one off analyses, kept for history and left out of the pipeline
 ```
+
+Model files and the raw data are not committed. The pipeline regenerates them. The small JSON metric
+files under `outputs/` are committed as the evidence behind the numbers in this README.
 
 ## Running it
 
@@ -63,25 +95,39 @@ cd fraud_detection_model
 
 python -m venv .venv
 source .venv/bin/activate        # Windows: .venv\Scripts\activate
-pip install -r requirements.txt
+pip install -e ".[dev]"
 ```
+
+Reproduce everything with one command.
 
 ```bash
-# 1. prepare the time-ordered splits
-python scripts/prepare_data.py
-
-# 2. train the base models (examples)
-python scripts/layer0_models.py
-python scripts/train_lightgbm.py
-python scripts/isolation_forest.py
-
-# 3. build and evaluate the stack
-python scripts/train_stack.py
-python scripts/eval_stack.py
+make reproduce
 ```
+
+Or run the steps yourself.
+
+```bash
+python scripts/download_data.py     # needs Kaggle credentials, or drop creditcard.csv into data/
+python scripts/prepare_data.py      # time ordered train, validation and test splits
+
+python scripts/ensamble_models.py   # logistic regression, random forest and XGBoost variants
+python scripts/train_layer0_mlp.py  # the MLP base model
+python scripts/train_lightgbm.py    # the LightGBM base model
+python scripts/isolation_forest.py  # the Isolation Forest base model
+
+python scripts/select_layer0.py     # rank base models by validation AUPRC
+python scripts/train_stack.py       # train the meta-model on validation
+python scripts/eval_stack.py        # score the frozen stack on test, once
+```
+
+Run the tests with `make test`.
 
 ## What I would do next
 
-- Calibrate the final scores (Platt / isotonic) so the threshold maps to a real precision–recall trade-off a fraud team could set by policy.
-- Report cost-weighted metrics — a missed fraud and a false alarm are not equally expensive, and the operating point should reflect that.
-- Add drift monitoring, since fraud patterns move and a model this dependent on temporal order will decay.
+- Calibrate the final scores with Platt scaling or isotonic regression, so a threshold maps to a
+  real precision and recall tradeoff a fraud team can set as policy, and report metrics at a
+  threshold chosen on validation rather than a flat 0.5.
+- Report cost weighted metrics, since a missed fraud and a false alarm do not cost the same amount.
+- Add drift monitoring, because fraud patterns move and a model this tied to time order will decay.
+  There is a small `serve.py` that loads the frozen stack and scores new rows. It is a starting
+  point, not a finished service.
