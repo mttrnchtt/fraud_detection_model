@@ -1,16 +1,26 @@
 import argparse
+import hashlib
 import json
 from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from src.fd.data_prep.utils import load_config
-from src.fd.data_prep.data import load_raw_csv, chronological_split
-from src.fd.data_prep.features import fit_scaler
+from fd.data_prep.utils import load_config
+from fd.data_prep.data import load_raw_csv, chronological_split
+from fd.data_prep.features import fit_scaler
 
 
 def ensure_dir(p: Path):
     p.mkdir(parents=True, exist_ok=True)
+
+
+def sha256_file(path: Path) -> str:
+    """Stream a sha256 of the raw CSV so the split is pinned to a known input."""
+    h = hashlib.sha256()
+    with open(path, "rb") as f:
+        for chunk in iter(lambda: f.read(1 << 20), b""):
+            h.update(chunk)
+    return h.hexdigest()
 
 
 def save_npz(path: Path, arr: np.ndarray):
@@ -18,22 +28,12 @@ def save_npz(path: Path, arr: np.ndarray):
 
 
 def add_creditcard_features(X_transformed: pd.DataFrame, df_original: pd.DataFrame) -> tuple[np.ndarray, list[str]]:
-    """X_transformed contins 3 time features, and this function adds the rest of the features to it
+    """Append the raw V1..V28 columns to the scaled time and amount features.
 
-    Args:
-        X_transformed (pd.DataFrame): _description_
-        df_original (_type_): _description_
-        amount_col (str, optional): _description_. Defaults to "Amount".
-
-    Returns:
-        tuple[pd.DataFrame, list[str]]: final prepared data with normalized features, list with names of features (except for time features)
+    Returns the stacked matrix and the list of V feature names.
     """
     v_features = [col for col in df_original.columns if col.startswith('V')]
-    
-    # Get indices matching between transformed and original
     X_additional = df_original[v_features].astype(np.float32).values
-    
-    # Combine: transformed time features + V features + Amount
     X_extended = np.hstack([X_transformed, X_additional])
     return X_extended, v_features
 
@@ -48,6 +48,12 @@ def main(cfg_path: str):
     target_col = cfg["data"]["target_col"]
     test_size = float(cfg["data"]["test_size"])
     val_size = float(cfg["data"]["val_size"])
+
+    if not raw_csv.exists():
+        raise SystemExit(
+            f"Raw data not found at {raw_csv}.\n"
+            f"Run `python scripts/download_data.py` (Kaggle) or place creditcard.csv there."
+        )
 
     print(f"[1/5] Loading {raw_csv} ...")
     df = load_raw_csv(str(raw_csv))
@@ -92,6 +98,7 @@ def main(cfg_path: str):
     
     # Minimal manifest
     manifest = {
+        "raw_csv_sha256": sha256_file(raw_csv),
         "splits": {"train": len(df_train), "val": len(df_val), "test": len(df_test)},
         "features": all_features,
         "normalized_features": normalized_features,
@@ -109,7 +116,7 @@ def main(cfg_path: str):
     with open(out_dir / "manifest.json", "w") as f:
         json.dump(manifest, f, indent=2)
 
-    print("Done →", out_dir.resolve())
+    print("Done.", out_dir.resolve())
 
 
 if __name__ == "__main__":

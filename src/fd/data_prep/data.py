@@ -2,20 +2,8 @@ import pandas as pd
 
 
 def load_raw_csv(path: str) -> pd.DataFrame:
-    """Loads a CSV file into a pandas DataFrame with minimal validation.
-
-    Args:
-        path: The file path to the CSV file.
-
-    Returns:
-        A pandas.DataFrame containing the data from the CSV file.
-
-    Raises:
-        ValueError: If the CSV file is missing the required 'Class' or 'Time' columns.
-    """
+    """Read the CSV and check the two columns the rest of the pipeline relies on."""
     df = pd.read_csv(path)
-
-    # minimal sanity checks for this project
     if "Class" not in df.columns:
         raise ValueError("Expected a 'Class' column in the CSV.")
     if "Time" not in df.columns:
