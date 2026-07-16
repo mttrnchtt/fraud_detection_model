@@ -152,7 +152,7 @@ def perform_model_selection(X_train, y_train, X_val, y_val, X_test, y_test,
     print(f"  ✓ Best model test AUPRC: {test_ap:.4f}")
     
     print(f"\n[3/3] Top 5 configurations by validation AUC ROC:")
-    print(results_df.nsmallest(5, 'Roc Auc Val')[
+    print(results_df.nlargest(5, 'Roc Auc Val')[
         ['Parameters', 'Roc Auc Val', 'Roc Auc Test']
     ].to_string(index=False))
     

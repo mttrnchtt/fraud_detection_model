@@ -258,7 +258,7 @@ results_dt['Parameters Summary'] = [params_dict[i]['clf__max_depth']
 
 print(f"\n✓ Decision Tree completed in {execution_time_dt:.2f}s")
 print("\nTop 5 configurations by validation AUC ROC:")
-print(results_dt.nsmallest(5, 'Roc Auc Mean Validation')[
+print(results_dt.nlargest(5, 'Roc Auc Mean Validation')[
     ['Parameters Summary', 'Roc Auc Mean Validation', 'Roc Auc Mean Test']
 ].to_string())
 
