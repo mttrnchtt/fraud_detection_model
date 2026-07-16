@@ -1,139 +1,87 @@
-# Credit Card Fraud Detection – Stacking Ensemble
+# Credit Card Fraud Detection — Stacking Ensemble
 
-This project implements a **time-aware credit card fraud detector** using the [Kaggle Credit Card Fraud Detection dataset](https://www.kaggle.com/datasets/mlg-ulb/creditcardfraud).
+A fraud detector for credit card transactions built to behave like a production system: it never looks into the future, it keeps the real fraud rate untouched, and it combines several different model families through stacking to squeeze out precision on an extremely rare positive class.
 
-The goal is to build a realistic pipeline that:
-1.  **Respects temporal order**: No future information leakage.
-2.  **Preserves class imbalance**: Maintains the real-world ~0.17% fraud rate.
-3.  **Maximizes AUPRC**: Uses heterogeneous models and stacking to push Average Precision as close as possible to 0.8.
+Dataset: [Kaggle Credit Card Fraud Detection](https://www.kaggle.com/datasets/mlg-ulb/creditcardfraud) — 284,807 transactions, 492 of them fraudulent (0.17%).
 
----
+## Results
 
-## 📊 Data & Evaluation Setup
+Final numbers on the held-out test window (the last 15% of transactions in time):
 
-### Dataset
-- **Records**: 284,807 transactions
-- **Frauds**: 492 (~0.172%)
-- **Features**:
-    - `Time`: Seconds since the first transaction.
-    - `Amount`: Transaction amount.
-    - `V1–V28`: Anonymized PCA components.
+| Model | AUROC | AUPRC |
+|---|---|---|
+| **Stacking, meta-LR** | **0.9857** | 0.7848 |
+| Stacking, meta-MLP (compact) | 0.9836 | **0.7865** |
+| MLP (best single model) | ~0.983 | ~0.777 |
+| XGBoost, weighted (w=5) | — | ~0.771 |
+| Balanced Random Forest | — | ~0.763 |
+| LightGBM | — | ~0.739 |
+| Logistic Regression | — | ~0.690 |
 
-### Time-Aware Splits
-To mimic a production environment, we use strictly chronological splits:
+The point of the table is not the top number on its own. It is that stacking beats every individual model, and it does so because the base learners make *different* mistakes.
 
-| Split | Description | Usage |
-| :--- | :--- | :--- |
-| **Train A** | First 70% | Training Layer-0 (Base) Models |
-| **Validation B** | Next 15% | Tuning Layer-0 & Training Layer-1 (Meta) Models |
-| **Test C** | Final 15% | Final Evaluation |
+## Why the setup matters
 
-> **Note:** No oversampling or undersampling is used. The real fraud rate is preserved to ensure realistic performance estimates.
+Most fraud tutorials quietly cheat in one of two ways, and both inflate the score:
 
----
+**Random train/test splits.** If you shuffle transactions before splitting, the model trains on transactions that happened after the ones it is tested on. That is future leakage, and it will not survive contact with production. Here the data is split strictly by time:
 
-## 🧠 Model Architecture
+- Train (first 70%) — trains the base models
+- Validation (next 15%) — tunes base models and trains the meta-model
+- Test (final 15%) — touched exactly once, for the numbers above
 
-### Layer 0: Base Learners
-We combine different "types of intelligence" to maximize diversity:
+**Resampling the classes.** Oversampling fraud or undersampling the rest makes training easier but reports a fraud rate the model will never see live. Here the real 0.17% is preserved everywhere, and class imbalance is handled inside the models (class weights, balanced sampling) rather than by rewriting the dataset.
 
-| Model Type | Description | Variants |
-| :--- | :--- | :--- |
-| **MLP** | Nonlinear intelligence | `sklearn` MLP (256-128-64), ReLU, Adam |
-| **XGBoost** | Tree/Rule intelligence | Weighted ($w \in \{5, 10, 50, 100\}$) |
-| **Random Forest** | Bagging intelligence | Balanced ($s \in \{0.5, 1.0\}$), Baseline |
-| **LightGBM** | Leaf-wise tree intelligence | Tuned for high precision/recall trade-off |
-| **Logistic Regression** | Linear intelligence | Weighted, Baseline |
-| **Isolation Forest** | Anomaly intelligence | Unsupervised anomaly scores |
+Because positives are so rare, the headline metric is **AUPRC**, not accuracy or AUROC. A model that flags nothing is 99.83% accurate and completely useless.
 
-### Layer 1: Stacking (Meta-Models)
-Meta-models take the predictions (scores) from Layer-0 models on splits B and C as input features.
+## How it works
 
-- **Meta-MLP**: Small networks (e.g., [16, 8]), trained on B.
-- **Meta-Logistic Regression**: Linear combination of base scores.
+**Layer 0 — base learners.** Six model families, chosen to disagree with each other:
 
----
+- MLP — nonlinear boundaries
+- XGBoost — gradient-boosted trees, weighted toward the fraud class
+- Balanced Random Forest — bagging with balanced subsampling
+- LightGBM — leaf-wise boosting
+- Logistic Regression — a linear baseline worth keeping
+- Isolation Forest — unsupervised anomaly score, the only model that never sees a label
 
-## 📈 Results (Test Window C)
+**Layer 1 — meta-model.** The base models score the validation and test windows, and those scores become the features for a small meta-model (logistic regression or a compact MLP) that learns how to weigh them. Stacking helps here precisely because the base models are heterogeneous — a linear combiner on top of near-identical models would gain nothing.
 
-### Top Stacking Ensembles
+## Repository layout
 
-| Rank | Ensemble Type | Layer-0 Models | AUROC | AUPRC |
-| :--- | :--- | :--- | :--- | :--- |
-| 🥇 | **Meta-MLP (Compact)** | MLP, XGB (w5), RF (s1), LR (w), IF | 0.9836 | **0.7865** |
-| 🥈 | **Meta-MLP (Extended)** | + LightGBM, More XGBs | 0.9850 | 0.7850 |
-| 🥉 | **Meta-LR** | All Base Models | **0.9857** | 0.7848 |
+```
+scripts/     runnable steps: prepare data, train each base model, build and evaluate the stack
+src/fd/      shared code, organized per model (data_prep, rf_helpers, mlp_helpers, stack_helpers)
+outputs/     saved training_results.json for every model variant
+```
 
-### Base Model Performance (Reference)
-
-| Model | AUPRC (approx) | Notes |
-| :--- | :--- | :--- |
-| **MLP** | ~0.777 | Strongest single model |
-| **XGBoost (w=5)** | ~0.771 | Strong tree baseline |
-| **Balanced RF** | ~0.763 | Good diversity |
-| **LightGBM** | ~0.739 | Leaf-wise split diversity |
-| **Logistic Regression** | ~0.690 | Linear baseline |
-
----
-
-## 🚀 Usage
-
-### 1. Installation
+## Running it
 
 ```bash
-# Clone the repository
-git clone https://github.com/nurlan-nurlybay/fraud_detection_model.git
+git clone https://github.com/mttrnchtt/fraud_detection_model.git
 cd fraud_detection_model
 
-# Create virtual environment
 python -m venv .venv
-source .venv/bin/activate  # Windows: .venv\Scripts\activate
-
-# Install dependencies
+source .venv/bin/activate        # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
-### 2. Data Preprocessing
-
 ```bash
-python -m scripts.preprocess_data
-# Outputs data_processed/X_*.npz and y_*.npy
+# 1. prepare the time-ordered splits
+python scripts/prepare_data.py
+
+# 2. train the base models (examples)
+python scripts/layer0_models.py
+python scripts/train_lightgbm.py
+python scripts/isolation_forest.py
+
+# 3. build and evaluate the stack
+python scripts/train_stack.py
+python scripts/eval_stack.py
 ```
 
-### 3. Train Layer-0 Models
+## What I would do next
 
-```bash
-# Train individual base models
-python -m scripts.train_layer0_mlp -c configs/mlp.yaml
-python -m scripts.train_lightgbm -c configs/lightgbm.yaml
-python -m scripts.train_isolation_forest -c configs/isolation_forest.yaml
-# ... see scripts/ for other models (RF, XGB, LR)
-```
-
-### 4. Train & Evaluate Stacked Model
-
-```bash
-python -m scripts.train_stack_mlp \
-  -c configs/meta_mlp.yaml \
-  --option A \
-  --tune \
-  --thresholds 0.1 0.25 0.5
-```
-
----
-
-## 📂 Directory Structure
-
-```text
-fraud_detection_model/
-├── configs/              # YAML configuration files
-├── data/                 # Raw dataset (creditcard.csv)
-├── data_processed/       # Preprocessed numpy arrays
-├── models/               # Saved model artifacts (.joblib)
-├── notebooks/            # Exploratory notebooks
-├── outputs/              # Training logs and predictions
-├── reports/              # Figures and performance reports
-├── scripts/              # Training and evaluation scripts
-├── src/                  # Shared source code (utils, models)
-└── tests/                # Unit tests
-```
+- Calibrate the final scores (Platt / isotonic) so the threshold maps to a real precision–recall trade-off a fraud team could set by policy.
+- Report cost-weighted metrics — a missed fraud and a false alarm are not equally expensive, and the operating point should reflect that.
+- Add drift monitoring, since fraud patterns move and a model this dependent on temporal order will decay.
