@@ -1,12 +1,11 @@
 #!/usr/bin/env python3
 """
-Inference stub, a starting point rather than a production service.
-
-Loads a frozen stacking option (base models plus the meta-model persisted by
-train_stack.py) and returns fraud probabilities for a feature matrix. A real
-deployment still needs a validation-tuned decision threshold, probability
-calibration, an HTTP or gRPC surface, input validation and auth, batching, and
-drift monitoring (see the README, "What I would do next").
+Inference stub. Loads a frozen stacking option (base models plus the meta-model
+persisted by train_stack.py) and returns fraud probabilities for a feature matrix.
+It is only a starting point. A real deployment still needs a validation-tuned
+decision threshold, probability calibration, an HTTP or gRPC surface, input
+validation and auth, batching, and drift monitoring (see the README, "What I
+would do next").
 
 Usage (demo, scores the processed test split):
     python scripts/serve.py --option B_wLGBM --n 5
@@ -43,7 +42,7 @@ def main() -> None:
     proba = score(X, args.option)
     for i, p in enumerate(proba):
         print(f"row {i}: P(fraud)={p:.4f}")
-    print("\n[stub] No calibrated threshold applied, raw model probabilities only.")
+    print("\n[stub] Returning raw model probabilities. No calibrated threshold is applied.")
 
 
 if __name__ == "__main__":

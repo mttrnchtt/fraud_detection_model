@@ -1,8 +1,6 @@
-"""Shared building blocks used by the base-MLP and stacking helper packages.
-
-This is the single source of truth for seeding, metric computation, and MLP
-construction so the ``mlp_helpers`` and ``stack_helpers`` packages don't drift
-apart (they used to hold byte-identical copies).
+"""Shared building blocks for the base-MLP and stacking helper packages: seeding,
+metric computation, and MLP construction. Both packages import from here so they
+stay in sync.
 """
 
 from typing import Dict

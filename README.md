@@ -26,7 +26,7 @@ against the saved files under `outputs/` by `scripts/check_readme_metrics.py`.
 | Logistic Regression, weighted         | 0.9772 | 0.6897 |
 | Isolation Forest (unsupervised)       | 0.9371 | 0.0542 |
 
-The MLP combiner comes out a little ahead of the best single model on both scores. The linear combiner lands right next to the best single model rather than clearly beating it. So stacking buys a small gain here that depends on which combiner you use. Because frauds are so rare, the number that matters is AUPRC, not accuracy and not AUROC. A model that flags nothing at all is still 99.83 percent accurate and completely useless.
+The MLP combiner comes out a little ahead of the best single model on both scores. The linear combiner scores about the same as the best single model. The gain from stacking is small here and depends on the combiner. AUPRC is the number to watch, because on data this imbalanced accuracy and AUROC stay high even for a useless model. A model that flags nothing at all is still 99.83 percent accurate.
 
 ## Why the split and the sampling matter
 
@@ -45,10 +45,10 @@ else makes training easier but reports a fraud rate the model will never meet in
 the real 0.17 percent is kept everywhere, and the imbalance is handled inside the models with class
 weights and balanced sampling.
 
-There is a third, quieter shortcut that this project takes care to avoid. Choosing which base models
-to keep by looking at their test scores is itself a kind of leakage. Here the base models are ranked
-by validation AUPRC in `scripts/select_layer0.py`, which writes `reports/layer0.txt`, and a guard
-called `assert_meta_source_is_holdout` refuses to train the meta-model on the base training split.
+A third shortcut is easy to miss. Choosing which base models to keep by looking at their test scores
+is itself a kind of leakage. Here the base models are ranked by validation AUPRC in
+`scripts/select_layer0.py`, which writes `reports/layer0.txt`, and a guard called
+`assert_meta_source_is_holdout` refuses to train the meta-model on the base training split.
 
 ## How it works
 
@@ -65,8 +65,8 @@ Layer 1 is the meta-model. The base models score the validation window. Those sc
 common scale first, which matters because the tree and linear models output probabilities while the
 Isolation Forest outputs an unbounded anomaly score. The scaled scores become the features for a
 small meta-model, either a logistic regression or a compact MLP, trained on validation. The frozen
-meta-model then scores the test window once. Stacking earns its keep here because the base models
-disagree with each other. A combiner sitting on top of near identical models would gain nothing.
+meta-model then scores the test window once. Stacking helps here because the base models disagree
+with each other. A combiner on top of near identical models would gain nothing.
 
 ## Layout
 
@@ -121,9 +121,9 @@ Run the tests with `make test`.
 ## What I would do next
 
 - Calibrate the final scores with Platt scaling or isotonic regression, so a threshold maps to a
-  real precision and recall tradeoff a fraud team can set as policy, and report metrics at a
-  threshold chosen on validation rather than a flat 0.5.
+  real precision and recall tradeoff a fraud team can set as policy. Pick that threshold on
+  validation and report test metrics at it. The code currently reports at a flat 0.5.
 - Report cost weighted metrics, since a missed fraud and a false alarm do not cost the same amount.
 - Add drift monitoring, because fraud patterns move and a model this tied to time order will decay.
-  There is a small `serve.py` that loads the frozen stack and scores new rows. It is a starting
-  point, not a finished service.
+  There is a small `serve.py` that loads the frozen stack and scores new rows. It is only a starting
+  point.
