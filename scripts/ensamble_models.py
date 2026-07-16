@@ -34,10 +34,11 @@ from imblearn.ensemble import BalancedRandomForestClassifier
 import warnings
 warnings.filterwarnings('ignore')
 
+# Single seed knob for every estimator in this script.
+SEED = 0
 
-# ============================================
+
 # UTILITY FUNCTIONS
-# ============================================
 def load_processed_data(processed_dir="data_processed"):
     """Load processed data from data_processed directory."""
     data_dir = Path(processed_dir)
@@ -66,25 +67,19 @@ def compute_metrics(y_true, y_pred, y_proba):
 
 
 def train_and_evaluate(classifier, X_train, y_train, X_val, y_val, X_test, y_test, scale=True):
-    """
-    Train a model and evaluate on all splits.
-    
-    Returns:
-        pipe: Trained pipeline
-        results: Dictionary with metrics and timing
-        predictions: Dictionary with predictions for all splits
+    """Fit the classifier and score it on train, val, and test.
+
+    Returns the fitted pipeline, a metrics-and-timing dict, and per-split predictions.
     """
     if scale:
         pipe = Pipeline([('scaler', StandardScaler()), ('clf', classifier)])
     else:
         pipe = Pipeline([('clf', classifier)])
     
-    # Train
     start_time = time.time()
     pipe.fit(X_train, y_train)
     train_time = time.time() - start_time
-    
-    # Predict on all splits
+
     predictions = {}
     results = {}
     
@@ -113,29 +108,19 @@ def train_and_evaluate(classifier, X_train, y_train, X_val, y_val, X_test, y_tes
 
 def save_model_results(model_name, pipe, results, predictions, model_dir, output_dir):
     """Save model, results, and predictions to disk."""
-    # Create directories
     model_dir = Path(model_dir)
     output_dir = Path(output_dir)
     model_dir.mkdir(parents=True, exist_ok=True)
     output_dir.mkdir(parents=True, exist_ok=True)
     pred_dir = output_dir / 'preds'
     pred_dir.mkdir(parents=True, exist_ok=True)
-    
-    # Save model
-    model_path = model_dir / 'model.joblib'
-    joblib.dump(pipe, model_path)
-    print(f"  Model saved to: {model_path}")
-    
-    # Save results
-    results_path = output_dir / 'training_results.json'
-    with open(results_path, 'w') as f:
+
+    joblib.dump(pipe, model_dir / 'model.joblib')
+    with open(output_dir / 'training_results.json', 'w') as f:
         json.dump(results, f, indent=2)
-    print(f"  Results saved to: {results_path}")
-    
-    # Save predictions
     for key, value in predictions.items():
         np.save(pred_dir / f'{key}.npy', value)
-    print(f"  Predictions saved to: {pred_dir}")
+    print(f"  Saved {model_name} to {model_dir} and {output_dir}")
 
 
 def get_model_dir_name(model_name):
@@ -156,9 +141,11 @@ def get_model_dir_name(model_name):
         elif 'xgboost' in name:
             return 'xgb_baseline'
     elif 'balanced_rf' in name:
-        # Extract sampling strategy
-        strategy = name.split('s')[1].strip()
-        return f'rf_balanced_s{strategy}'
+        # Extract sampling strategy, e.g. 'balanced_rf_s0.5' -> '0.5'
+        match = re.search(r'_s([0-9.]+)', name)
+        if match:
+            return f'rf_balanced_s{match.group(1)}'
+        return 'rf_balanced_unknown'
     elif 'weighted_xgboost' in name:
         # Extract weight - use regex to find 'w' followed by digits
         # This avoids splitting on 'w' in "weighted"
@@ -173,9 +160,7 @@ def get_model_dir_name(model_name):
     return name
 
 
-# ============================================
 # MAIN EXECUTION
-# ============================================
 def main():
     print("Loading data...")
     X_train, X_val, X_test, y_train, y_val, y_test, manifest = load_processed_data()
@@ -194,16 +179,14 @@ def main():
     reports_dir = Path('reports')
     reports_dir.mkdir(parents=True, exist_ok=True)
     
-    # ============================================
     # BASELINE MODELS
-    # ============================================
     print("="*80)
     print("TRAINING BASELINE MODELS")
     print("="*80)
     
     # Logistic Regression Baseline
     print("\n[1/3] Training Baseline Logistic Regression...")
-    lr_baseline = LogisticRegression(C=0.1, random_state=0, max_iter=1000)
+    lr_baseline = LogisticRegression(C=0.1, random_state=SEED, max_iter=1000)
     pipe, results, predictions = train_and_evaluate(
         lr_baseline, X_train, y_train, X_val, y_val, X_test, y_test
     )
@@ -226,7 +209,7 @@ def main():
     
     # Random Forest Baseline
     print("\n[2/3] Training Baseline Random Forest...")
-    rf_baseline = RandomForestClassifier(max_depth=5, n_estimators=50, random_state=0, n_jobs=-1)
+    rf_baseline = RandomForestClassifier(max_depth=5, n_estimators=50, random_state=SEED, n_jobs=-1)
     pipe, results, predictions = train_and_evaluate(
         rf_baseline, X_train, y_train, X_val, y_val, X_test, y_test
     )
@@ -251,7 +234,7 @@ def main():
     print("\n[3/3] Training Baseline XGBoost...")
     xgb_baseline = xgboost.XGBClassifier(
         learning_rate=0.3, max_depth=6, n_estimators=50,
-        random_state=0, n_jobs=-1, eval_metric='logloss'
+        random_state=SEED, n_jobs=-1, eval_metric='logloss'
     )
     pipe, results, predictions = train_and_evaluate(
         xgb_baseline, X_train, y_train, X_val, y_val, X_test, y_test
@@ -273,9 +256,7 @@ def main():
         'Balanced Accuracy': f"{results['test']['balanced_accuracy']:.3f}"
     })
     
-    # ============================================
     # BALANCED RANDOM FOREST
-    # ============================================
     print("\n" + "="*80)
     print("TRAINING BALANCED RANDOM FOREST MODELS")
     print("="*80)
@@ -285,7 +266,7 @@ def main():
         print(f"\n[{i}/{len(sampling_strategies)}] Training Balanced RF (s={sampling_strategy})...")
         brf = BalancedRandomForestClassifier(
             max_depth=5, n_estimators=50, sampling_strategy=sampling_strategy,
-            random_state=0, n_jobs=-1
+            random_state=SEED, n_jobs=-1
         )
         pipe, results, predictions = train_and_evaluate(
             brf, X_train, y_train, X_val, y_val, X_test, y_test
@@ -307,9 +288,7 @@ def main():
             'Balanced Accuracy': f"{results['test']['balanced_accuracy']:.3f}"
         })
     
-    # ============================================
     # WEIGHTED XGBOOST
-    # ============================================
     print("\n" + "="*80)
     print("TRAINING WEIGHTED XGBOOST MODELS")
     print("="*80)
@@ -319,7 +298,7 @@ def main():
         print(f"\n[{i}/{len(scale_weights)}] Training Weighted XGBoost (w={scale_weight})...")
         wxgb = xgboost.XGBClassifier(
             learning_rate=0.3, max_depth=6, n_estimators=50,
-            scale_pos_weight=scale_weight, random_state=0, n_jobs=-1, eval_metric='logloss'
+            scale_pos_weight=scale_weight, random_state=SEED, n_jobs=-1, eval_metric='logloss'
         )
         pipe, results, predictions = train_and_evaluate(
             wxgb, X_train, y_train, X_val, y_val, X_test, y_test
@@ -341,14 +320,12 @@ def main():
             'Balanced Accuracy': f"{results['test']['balanced_accuracy']:.3f}"
         })
     
-    # ============================================
     # CLASS-WEIGHTED LOGISTIC REGRESSION
-    # ============================================
     print("\n" + "="*80)
     print("TRAINING WEIGHTED LOGISTIC REGRESSION")
     print("="*80)
     print("\n[1/1] Training Weighted Logistic Regression...")
-    lr_weighted = LogisticRegression(C=0.1, random_state=0, max_iter=1000, class_weight='balanced')
+    lr_weighted = LogisticRegression(C=0.1, random_state=SEED, max_iter=1000, class_weight='balanced')
     pipe, results, predictions = train_and_evaluate(
         lr_weighted, X_train, y_train, X_val, y_val, X_test, y_test
     )
@@ -369,9 +346,7 @@ def main():
         'Balanced Accuracy': f"{results['test']['balanced_accuracy']:.3f}"
     })
     
-    # ============================================
     # CREATE RESULTS TABLE AND REPORT
-    # ============================================
     print("\n" + "="*80)
     print("GENERATING REPORT")
     print("="*80)
@@ -512,9 +487,9 @@ def main():
     
     report.close()
     
-    print(f"\n✓ Ensemble methods report saved to: {report_path}")
-    print(f"✓ All models saved to: models/")
-    print(f"✓ All outputs saved to: outputs/")
+    print(f"\nEnsemble methods report saved to: {report_path}")
+    print(f"All models saved to: models/")
+    print(f"All outputs saved to: outputs/")
     print(f"\nTotal models trained: {len(all_models)}")
     print(f"Best model: {results_df.loc[best_overall_idx, 'Model']}")
     print(f"Best AUC ROC: {results_df.loc[best_overall_idx, 'AUC ROC']}")
