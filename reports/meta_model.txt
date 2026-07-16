@@ -1,10 +1,24 @@
-===== META MODEL LOGREG Option_A_wLGBM =====
+Stacking meta-model (LogisticRegression), TEST metrics, scored once.
+Layer-0 members selected by validation AUPRC (see reports/layer0.txt).
+
+===== META MODEL LOGREG A =====
+Models: ['mlp', 'xgb_w5', 'xgb_w10', 'xgb_w50', 'rf_s1', 'lr_weighted', 'isolation_forest']
+AUPRC: 0.786633
+AUROC: 0.988153
+
+===== META MODEL LOGREG B =====
+Models: ['mlp', 'xgb_w5', 'rf_s1', 'lr_weighted', 'isolation_forest']
+AUPRC: 0.783192
+AUROC: 0.988176
+
+===== META MODEL LOGREG A_wLGBM =====
 Models: ['mlp', 'xgb_w5', 'xgb_w10', 'xgb_w50', 'rf_s1', 'lgbm', 'lr_weighted', 'isolation_forest']
-AUPRC: 0.758762
-AUROC: 0.985453
+AUPRC: 0.780059
+AUROC: 0.988048
 
-===== META MODEL LOGREG Option_B_wLGBM =====
+===== META MODEL LOGREG B_wLGBM =====
 Models: ['mlp', 'xgb_w5', 'rf_s1', 'lgbm', 'lr_weighted', 'isolation_forest']
-AUPRC: 0.770976
-AUROC: 0.985522
+AUPRC: 0.764027
+AUROC: 0.988011
 
+Best by test AUPRC: A (AUPRC=0.786633, AUROC=0.988153)

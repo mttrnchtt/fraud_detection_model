@@ -1,0 +1,22 @@
+{
+  "option": "B",
+  "members": [
+    "mlp",
+    "xgb_w5",
+    "rf_s1",
+    "lr_weighted",
+    "isolation_forest"
+  ],
+  "meta_source": "data_processed/X_val.npz",
+  "metrics": {
+    "val": {
+      "auprc": 0.8560935092442975,
+      "auroc": 0.990255897272773
+    },
+    "test": {
+      "auprc": 0.7831924727336078,
+      "auroc": 0.9881759771550954
+    }
+  },
+  "note": "Validation metrics only; test is scored once by eval_stack.py."
+}

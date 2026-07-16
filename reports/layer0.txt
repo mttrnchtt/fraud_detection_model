@@ -1,35 +1,20 @@
-Rankings by Average Precision (test set):
-1. MLP: 0.777
-2. XGB Weighted w=5: 0.771
-3. XGB Weighted w=10: 0.769
-4. XGB Weighted w=50: 0.765
-5. RF Balanced s=1.0: 0.763
-6. RF Balanced s=0.5: 0.755
-7. XGB Weighted w=100: 0.753
-8. RF Balanced s=0.1: 0.742
-9. RF Balanced s=0.01: 0.739
-10. RF Balanced s=0.05: 0.736
-11. Baseline RF: 0.723
-12. Weighted LR: 0.690
-13. Baseline LR: 0.646
-14. Baseline XGB: 0.587
-15. XGB Weighted w=1: 0.587
+Base-learner rankings by Average Precision (VALIDATION set).
+Selection basis for layer-0 options, never ranked on test.
 
-1. MLP: 0.777
-
-2. XGB Weighted w=5: 0.771
-3. XGB Weighted w=10: 0.769
-4. XGB Weighted w=50: 0.765
-7. XGB Weighted w=100: 0.753
-14. Baseline XGB: 0.587
-15. XGB Weighted w=1: 0.587
-
-5. RF Balanced s=1.0: 0.763
-6. RF Balanced s=0.5: 0.755
-8. RF Balanced s=0.1: 0.742
-9. RF Balanced s=0.01: 0.739
-10. RF Balanced s=0.05: 0.736
-11. Baseline RF: 0.723
-
-12. Weighted LR: 0.690
-13. Baseline LR: 0.646
+ 1. rf_balanced_s1.0       AUPRC=0.8535  AUROC=0.9803
+ 2. rf_balanced_s0.1       AUPRC=0.8513  AUROC=0.9811
+ 3. xgb_weighted_w10       AUPRC=0.8498  AUROC=0.9807
+ 4. lightgbm               AUPRC=0.8493  AUROC=0.9887
+ 5. rf_balanced_s0.05      AUPRC=0.8462  AUROC=0.9748
+ 6. rf_balanced_s0.5       AUPRC=0.8456  AUROC=0.9812
+ 7. rf_balanced_s0.01      AUPRC=0.8438  AUROC=0.9794
+ 8. xgb_weighted_w5        AUPRC=0.8435  AUROC=0.9668
+ 9. rf_baseline            AUPRC=0.8362  AUROC=0.9711
+10. xgb_weighted_w50       AUPRC=0.8332  AUROC=0.9820
+11. lr_weighted            AUPRC=0.8217  AUROC=0.9831
+12. xgb_weighted_w100      AUPRC=0.8135  AUROC=0.9776
+13. mlp                    AUPRC=0.7661  AUROC=0.9876
+14. lr_baseline            AUPRC=0.7615  AUROC=0.9825
+15. xgb_baseline           AUPRC=0.6168  AUROC=0.8729
+16. xgb_weighted_w1        AUPRC=0.6168  AUROC=0.8729
+17. isolation_forest       AUPRC=0.0385  AUROC=0.9471

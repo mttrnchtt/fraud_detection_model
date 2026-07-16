@@ -1,0 +1,23 @@
+{
+  "option": "B_wLGBM",
+  "members": [
+    "mlp",
+    "xgb_w5",
+    "rf_s1",
+    "lgbm",
+    "lr_weighted",
+    "isolation_forest"
+  ],
+  "meta_source": "data_processed/X_val.npz",
+  "metrics": {
+    "val": {
+      "auprc": 0.8606451098901678,
+      "auroc": 0.9902479449532069
+    },
+    "test": {
+      "auprc": 0.7640271818826025,
+      "auroc": 0.98801102223376
+    }
+  },
+  "note": "Validation metrics only; test is scored once by eval_stack.py."
+}

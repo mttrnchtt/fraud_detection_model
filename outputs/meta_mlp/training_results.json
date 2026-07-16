@@ -6,7 +6,7 @@
     ],
     "activation": "relu",
     "solver": "adam",
-    "learning_rate_init": 0.003,
+    "learning_rate_init": 0.005,
     "alpha": 0.0001,
     "max_iter": 100,
     "n_layers_": 4,
@@ -17,27 +17,26 @@
     ]
   },
   "training_config": {
-    "pos_weight": 518.7,
-    "sample_weights_used": true,
+    "pos_weight": 761.875,
     "validation_split": null
   },
   "metrics": {
     "train": {
-      "auroc": 0.9829523195660546,
-      "auprc": 0.875378836560505,
-      "accuracy": 0.9926968001685353,
-      "precision": 0.14444444444444443,
+      "auroc": 0.9901211263832851,
+      "auprc": 0.8627164606552562,
+      "accuracy": 0.9906603309847616,
+      "precision": 0.116331096196868,
       "recall": 0.9285714285714286,
-      "f1": 0.25
+      "f1": 0.20675944333996024
     },
     "val": null,
     "test": {
-      "auroc": 0.9853036883199295,
-      "auprc": 0.7827416948285452,
-      "accuracy": 0.9949673462699843,
-      "precision": 0.1700404858299595,
-      "recall": 0.8076923076923077,
-      "f1": 0.2809364548494983
+      "auroc": 0.988571688687698,
+      "auprc": 0.77460245479094,
+      "accuracy": 0.9934224386133284,
+      "precision": 0.1365079365079365,
+      "recall": 0.8269230769230769,
+      "f1": 0.23433242506811988
     }
   },
   "data_info": {
