@@ -10,10 +10,11 @@ The data is the [Kaggle Credit Card Fraud dataset](https://www.kaggle.com/datase
 
 ## Results
 
-Every number below is on the held out test window, meaning the last 15 percent of transactions in
-time. The test set is scored once, by `eval_stack.py`, after the layer-0 set and the meta-model
-have already been chosen on validation. All of it is reproducible with `make all` and is checked
-against the saved files under `outputs/` by `scripts/check_readme_metrics.py`.
+Every number below is on the held out test window, the last 15 percent of transactions in time.
+The layer-0 set and the meta-model are chosen on the validation window. The test window is used
+only for the final numbers reported here, never for selection. Everything is reproducible with
+`make reproduce` and checked against the saved files under `outputs/` by
+`scripts/check_readme_metrics.py`.
 
 | Model (test set, scored once)         | AUROC  | AUPRC  |
 |---------------------------------------|--------|--------|
@@ -27,6 +28,28 @@ against the saved files under `outputs/` by `scripts/check_readme_metrics.py`.
 | Isolation Forest (unsupervised)       | 0.9371 | 0.0542 |
 
 The MLP combiner comes out a little ahead of the best single model on both scores. The linear combiner scores about the same as the best single model. The gain from stacking is small here and depends on the combiner. AUPRC is the number to watch, because on data this imbalanced accuracy and AUROC stay high even for a useless model. A model that flags nothing at all is still 99.83 percent accurate.
+
+## Turning scores into a decision
+
+AUROC and AUPRC rank transactions but do not set a cutoff. `eval_stack.py` calibrates the selected
+stack's scores with isotonic regression on validation, then picks a threshold on validation and
+scores the test window at it. Calibration drops the test Brier score from 0.0110 to 0.0004, so the
+threshold maps to a real precision and recall.
+
+At the max-F1 threshold the selected stack (B_wLGBM) flags 44 of 42,721 test transactions:
+
+| Metric (test, threshold set on validation) | Value |
+|---------------------------------------------|-------|
+| Precision                                   | 0.886 |
+| Recall                                      | 0.750 |
+| F1                                          | 0.812 |
+| precision@0.5%                              | 0.192 |
+| Savings, review cost 3.0                    | 0.594 |
+
+Savings is the share of fraud dollars avoided net of review cost, using each transaction's Amount.
+Missing a fraud loses its amount, reviewing a flagged transaction costs a fixed amount, and the
+baseline flags nothing. The threshold, the calibration method, and the review cost are set in
+`configs/stack.yaml`.
 
 ## Why the split and the sampling matter
 
@@ -106,7 +129,7 @@ Or run the steps yourself.
 python scripts/download_data.py     # needs Kaggle credentials, or drop creditcard.csv into data/
 python scripts/prepare_data.py      # time ordered train, validation and test splits
 
-python scripts/ensamble_models.py   # logistic regression, random forest and XGBoost variants
+python scripts/ensemble_models.py   # logistic regression, random forest and XGBoost variants
 python scripts/train_layer0_mlp.py  # the MLP base model
 python scripts/train_lightgbm.py    # the LightGBM base model
 python scripts/isolation_forest.py  # the Isolation Forest base model
@@ -118,12 +141,21 @@ python scripts/eval_stack.py        # score the frozen stack on test, once
 
 Run the tests with `make test`.
 
+## Limits of this dataset
+
+`V1..V28` are PCA components released for anonymity. There are no card, merchant, or device IDs and
+no per-card history, so the methods used in production fraud systems do not apply here: velocity and
+per-entity aggregation features, graph models over shared entities, and sequence models over a
+card's history. What works here is what the repo already does, a cost-sensitive tree ensemble with
+time-ordered validation, calibration, and a cost-based threshold. The stacking gain stays small.
+
 ## What I would do next
 
-- Calibrate the final scores with Platt scaling or isotonic regression, so a threshold maps to a
-  real precision and recall tradeoff a fraud team can set as policy. Pick that threshold on
-  validation and report test metrics at it. The code currently reports at a flat 0.5.
-- Report cost weighted metrics, since a missed fraud and a false alarm do not cost the same amount.
+- Choose the threshold on a slice of validation the meta-model was not trained on. Today the
+  calibrator and the threshold are fit on the same validation window the meta-model learns from, so
+  the operating point carries a little in-sample optimism.
 - Add drift monitoring, because fraud patterns move and a model this tied to time order will decay.
   There is a small `serve.py` that loads the frozen stack and scores new rows. It is only a starting
   point.
+- Try CatBoost as an extra base learner and a LightGBM plus CatBoost blend. On this anonymized
+  dataset the expected gain is small.
