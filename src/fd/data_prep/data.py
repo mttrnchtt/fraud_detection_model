@@ -16,7 +16,9 @@ def chronological_split(df: pd.DataFrame, val_size: float, test_size: float, tim
     """Split by time order: first -> train, middle -> val, last -> test.
     Sizes are fractions of the whole dataset (e.g., 0.15).
     """
-    df_sorted = df.sort_values(time_col).reset_index(drop=True)
+    # Stable sort keeps rows with equal Time in input order, so the split boundary
+    # is deterministic across pandas and numpy versions.
+    df_sorted = df.sort_values(time_col, kind="mergesort").reset_index(drop=True)
     n = len(df_sorted)
 
     n_test = int(round(n * test_size))
