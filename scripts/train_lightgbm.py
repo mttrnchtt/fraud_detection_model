@@ -13,45 +13,39 @@ from pathlib import Path
 
 import joblib
 import numpy as np
-import yaml
 import lightgbm as lgb
 from sklearn.model_selection import ParameterSampler
 from sklearn.metrics import average_precision_score, roc_auc_score
 
 from fd.common import evaluate_with_thresholds
+from fd.data_prep.utils import load_config
 from fd.mlp_helpers.utils import load_all_data
 
 
-def load_config(path):
-    with open(path) as f:
-        return yaml.safe_load(f)
+def train_lightgbm(config, X_train, y_train):
+    """Fit LightGBM on the training split for a fixed number of rounds.
 
-
-def train_lightgbm(config, X_train, y_train, X_val, y_val):
-    params = {k: v for k, v in config["model"].items() if k != "n_estimators"}  # rounds set below
+    No early stopping, because it would tune the round count on the validation window
+    whose scores later feed the *_wLGBM stacks.
+    """
+    params = {k: v for k, v in config["model"].items() if k != "n_estimators"}
     train_data = lgb.Dataset(X_train, label=y_train)
-    val_data = lgb.Dataset(X_val, label=y_val, reference=train_data)
     return lgb.train(
         params,
         train_data,
-        num_boost_round=config["model"].get("n_estimators", 1000),
-        valid_sets=[train_data, val_data],
-        valid_names=["train", "val"],
-        callbacks=[
-            lgb.early_stopping(config["training"]["early_stopping_rounds"]),
-            lgb.log_evaluation(config["training"]["verbose_eval"]),
-        ],
+        num_boost_round=int(config["model"].get("n_estimators", 450)),
     )
 
 
 def tune(config, X_train, y_train, X_val, y_val):
+    """Random search over hyperparameters, ranked by validation AUPRC."""
     grid = config["tuning"]["param_grid"]
     best_auprc, best_model, best_config = -1.0, None, None
     for params in ParameterSampler(grid, n_iter=config["tuning"]["n_iter"],
                                    random_state=config["experiment"]["seed"]):
         cfg = copy.deepcopy(config)
         cfg["model"].update(params)
-        model = train_lightgbm(cfg, X_train, y_train, X_val, y_val)
+        model = train_lightgbm(cfg, X_train, y_train)
         auprc = average_precision_score(y_val, model.predict(X_val))
         print(f"  {params}: val AUPRC={auprc:.4f}")
         if auprc > best_auprc:
@@ -70,7 +64,7 @@ def main():
 
     X_train, y_train, X_val, y_val, X_test, y_test = load_all_data(config)
     model, config = (tune(config, X_train, y_train, X_val, y_val) if args.tune
-                     else (train_lightgbm(config, X_train, y_train, X_val, y_val), config))
+                     else (train_lightgbm(config, X_train, y_train), config))
 
     test_proba = model.predict(X_test)
     test_auroc = roc_auc_score(y_test, test_proba)

@@ -36,18 +36,9 @@ model:
 
   scale_pos_weight: 518
 
-  # tree count: set reasonably high, rely on early stopping
-  n_estimators: 500       # best iteration was 45, so 500 is more than enough
-
-training:
-  early_stopping_rounds: 50
-  verbose_eval: 50
-
-evaluation:
-  metrics: [auroc, auprc, accuracy, precision, recall, f1]
-  default_threshold: 0.5
-  alt_thresholds: [0.1, 0.25, 0.5]
-  threshold_metric: f1
+  # Fixed round count, no early stopping. Early stopping would tune rounds on the
+  # validation window, whose scores feed the *_wLGBM stacks (see train_lightgbm.py).
+  n_estimators: 450
 
 logging:
   save_predictions: true

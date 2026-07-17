@@ -31,28 +31,7 @@
             "reg_alpha": 0.1,
             "reg_lambda": 1.0,
             "scale_pos_weight": 518,
-            "n_estimators": 500
-        },
-        "training": {
-            "early_stopping_rounds": 50,
-            "verbose_eval": 50
-        },
-        "evaluation": {
-            "metrics": [
-                "auroc",
-                "auprc",
-                "accuracy",
-                "precision",
-                "recall",
-                "f1"
-            ],
-            "default_threshold": 0.5,
-            "alt_thresholds": [
-                0.1,
-                0.25,
-                0.5
-            ],
-            "threshold_metric": "f1"
+            "n_estimators": 450
         },
         "logging": {
             "save_predictions": true,
