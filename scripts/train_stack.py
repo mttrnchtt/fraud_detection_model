@@ -70,11 +70,20 @@ def main(config_path: str) -> None:
 
     ranking.sort(key=lambda r: r[1], reverse=True)
     best = ranking[0][0]
+
+    report_dir = Path(paths.get("report", "reports/meta_model.txt")).parent
+    report_dir.mkdir(parents=True, exist_ok=True)
+    with open(report_dir / "stack_selection.txt", "w") as f:
+        f.write("Stacking option ranking by VALIDATION AUPRC. Selection basis, never test.\n\n")
+        for name, auprc, auroc in ranking:
+            f.write(f"{name:10s} val AUPRC={auprc:.6f} val AUROC={auroc:.6f}\n")
+        f.write(f"\nSelected on validation: {best}\n")
+
     print("\nValidation ranking by AUPRC:")
     for name, auprc, auroc in ranking:
         print(f"  {name:10s} AUPRC={auprc:.6f} AUROC={auroc:.6f}")
     print(f"\nBest option on validation: {best}")
-    print("Run: python scripts/eval_stack.py  (scores the frozen meta-models on test once)")
+    print("Run: python scripts/eval_stack.py  (scores the frozen meta-models on test)")
 
 
 if __name__ == "__main__":

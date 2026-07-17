@@ -1,0 +1,8 @@
+Stacking option ranking by VALIDATION AUPRC. Selection basis, never test.
+
+B_wLGBM    val AUPRC=0.860645 val AUROC=0.990248
+A_wLGBM    val AUPRC=0.859252 val AUROC=0.990243
+B          val AUPRC=0.856094 val AUROC=0.990256
+A          val AUPRC=0.855297 val AUROC=0.990240
+
+Selected on validation: B_wLGBM

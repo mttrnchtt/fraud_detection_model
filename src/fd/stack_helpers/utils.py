@@ -127,9 +127,9 @@ def run_layer0(layer0_config: dict[str, str], X: np.ndarray) -> np.ndarray:
     return np.column_stack(preds)
 
 
-# Layer-0 model sets. Members are chosen by VALIDATION AUPRC (see
-# scripts/select_layer0.py -> reports/layer0.txt), never by test. Option A is the
-# broad set (diverse XGB weights); Option B is the compact set; the *_wLGBM
+# Layer-0 model sets, hand-curated from the validation AUPRC ranking
+# (scripts/select_layer0.py -> reports/layer0.txt), never from test. Option A is the
+# broad set with diverse XGB weights, option B is the compact set, and the *_wLGBM
 # variants add the LightGBM booster.
 layer0_option_A = {
     'mlp': 'models/mlp/model.joblib',

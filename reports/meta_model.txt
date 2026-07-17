@@ -1,24 +1,36 @@
-Stacking meta-model (LogisticRegression), TEST metrics, scored once.
-Layer-0 members selected by validation AUPRC (see reports/layer0.txt).
+Stacking meta-model (LogisticRegression). Option chosen by validation AUPRC
+(train_stack.py). Test metrics below are reported after selection.
 
-===== META MODEL LOGREG A =====
-Models: ['mlp', 'xgb_w5', 'xgb_w10', 'xgb_w50', 'rf_s1', 'lr_weighted', 'isolation_forest']
-AUPRC: 0.786633
-AUROC: 0.988153
-
-===== META MODEL LOGREG B =====
-Models: ['mlp', 'xgb_w5', 'rf_s1', 'lr_weighted', 'isolation_forest']
-AUPRC: 0.783192
-AUROC: 0.988176
+===== META MODEL LOGREG B_wLGBM =====  <- selected on validation
+Models: ['mlp', 'xgb_w5', 'rf_s1', 'lgbm', 'lr_weighted', 'isolation_forest']
+val AUPRC:  0.860645
+test AUPRC: 0.764027
+test AUROC: 0.988011
 
 ===== META MODEL LOGREG A_wLGBM =====
 Models: ['mlp', 'xgb_w5', 'xgb_w10', 'xgb_w50', 'rf_s1', 'lgbm', 'lr_weighted', 'isolation_forest']
-AUPRC: 0.780059
-AUROC: 0.988048
+val AUPRC:  0.859252
+test AUPRC: 0.780059
+test AUROC: 0.988048
 
-===== META MODEL LOGREG B_wLGBM =====
-Models: ['mlp', 'xgb_w5', 'rf_s1', 'lgbm', 'lr_weighted', 'isolation_forest']
-AUPRC: 0.764027
-AUROC: 0.988011
+===== META MODEL LOGREG B =====
+Models: ['mlp', 'xgb_w5', 'rf_s1', 'lr_weighted', 'isolation_forest']
+val AUPRC:  0.856094
+test AUPRC: 0.783192
+test AUROC: 0.988176
 
-Best by test AUPRC: A (AUPRC=0.786633, AUROC=0.988153)
+===== META MODEL LOGREG A =====
+Models: ['mlp', 'xgb_w5', 'xgb_w10', 'xgb_w50', 'rf_s1', 'lr_weighted', 'isolation_forest']
+val AUPRC:  0.855297
+test AUPRC: 0.786633
+test AUROC: 0.988153
+
+Selected on validation: B_wLGBM (test AUPRC=0.764027, AUROC=0.988011)
+
+Operating point for the selected option. Calibration and threshold are fit
+on validation, metrics are on test.
+  calibration=isotonic threshold_method=max_f1 threshold=0.5000
+  test precision=0.8864 recall=0.7500 f1=0.8125 flagged=44/42721
+  Brier raw=0.01097 calibrated=0.00036
+  precision@0.005=0.1916
+  savings(review_cost=3.0)=0.5940

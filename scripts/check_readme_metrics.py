@@ -49,6 +49,22 @@ def check_readme_metrics(readme: Path | None = None, outputs_root: Path | None =
             want = f"{t[key]:.4f}"
             if want not in text:
                 problems.append(f"{label}: README is missing {key.upper()}={want} from outputs/{subdir}")
+
+    # Operating point of the selected stack, if eval_stack.py has written it.
+    op_file = outputs_root / "stack_B_wLGBM" / "training_results.json"
+    if op_file.exists():
+        op = json.loads((op_file).read_text()).get("metrics", {}).get("operating_point")
+        if op:
+            wanted = {
+                "precision": f"{op['precision']:.3f}",
+                "recall": f"{op['recall']:.3f}",
+                "F1": f"{op['f1']:.3f}",
+                "precision@k": f"{op['precision_at_k']['value']:.3f}",
+                "savings": f"{op['savings']['value']:.3f}",
+            }
+            for label, want in wanted.items():
+                if want not in text:
+                    problems.append(f"operating point: README is missing {label}={want}")
     return problems
 
 

@@ -49,3 +49,13 @@ logging:
   save_predictions: true
   predictions_path: outputs/meta_mlp/preds
   save_config_copy: true
+
+# Operating point for eval_stack.py: calibrate scores and pick a threshold on the
+# validation window, then report the selected option on test at that threshold.
+evaluation:
+  calibration: isotonic         # isotonic or platt
+  threshold_method: max_f1      # max_f1, target_precision, or alert_budget
+  target_precision: 0.90        # used when threshold_method=target_precision
+  alert_rate: 0.005             # used when threshold_method=alert_budget
+  review_cost: 3.0              # cost of reviewing one flagged transaction, for savings
+  precision_at_k: 0.005         # top fraction of test scored for precision@k

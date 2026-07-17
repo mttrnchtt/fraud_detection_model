@@ -1,3 +1,10 @@
+evaluation:
+  alert_rate: 0.005
+  calibration: isotonic
+  precision_at_k: 0.005
+  review_cost: 3.0
+  target_precision: 0.9
+  threshold_method: max_f1
 experiment:
   name: meta_mlp
   seed: 1337

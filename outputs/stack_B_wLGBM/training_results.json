@@ -17,6 +17,26 @@
     "test": {
       "auprc": 0.7640271818826025,
       "auroc": 0.98801102223376
+    },
+    "operating_point": {
+      "calibration": "isotonic",
+      "threshold_method": "max_f1",
+      "threshold": 0.5,
+      "brier_raw": 0.010973399824446329,
+      "brier_calibrated": 0.00036455267973966313,
+      "precision": 0.8863636363636364,
+      "recall": 0.75,
+      "f1": 0.8125,
+      "precision_at_k": {
+        "k": 0.005,
+        "value": 0.19158878504672897
+      },
+      "savings": {
+        "review_cost": 3.0,
+        "value": 0.5940267644057553
+      },
+      "flagged": 44,
+      "n_test": 42721
     }
   },
   "note": "Validation metrics only; test is scored once by eval_stack.py."
