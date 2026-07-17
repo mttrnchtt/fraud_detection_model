@@ -19,7 +19,7 @@ prepare: ## build time-ordered train/val/test splits
 	$(PYTHON) scripts/prepare_data.py
 
 base: ## train every layer-0 base model into models/<name>/model.joblib
-	$(PYTHON) scripts/ensamble_models.py
+	$(PYTHON) scripts/ensemble_models.py
 	$(PYTHON) scripts/train_layer0_mlp.py
 	$(PYTHON) scripts/train_lightgbm.py
 	$(PYTHON) scripts/isolation_forest.py

@@ -1,0 +1,8 @@
+experiment:
+  seed: 0
+
+paths:
+  processed_dir: data_processed
+  models_dir: models
+  outputs_dir: outputs
+  reports_dir: reports

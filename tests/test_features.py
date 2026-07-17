@@ -120,7 +120,7 @@ def test_compute_metrics_degenerate_predictions_do_not_crash():
 # --------------------------- import smoke ---------------------------
 
 @pytest.mark.parametrize("script", [
-    "prepare_data", "ensamble_models", "train_layer0_mlp", "train_lightgbm",
+    "prepare_data", "ensemble_models", "train_layer0_mlp", "train_lightgbm",
     "isolation_forest", "select_layer0", "train_stack", "eval_stack",
     "train_stack_mlp", "download_data", "check_readme_metrics", "serve",
 ])

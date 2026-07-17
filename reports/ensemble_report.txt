@@ -1,97 +1,24 @@
-====================================================================================================
-ENSEMBLE METHODS FOR IMBALANCED FRAUD DETECTION - EXPERIMENTAL RESULTS
-====================================================================================================
+Layer-0 base models for imbalanced fraud detection.
+Ranked by AUPRC, the headline metric at 0.17 percent positives.
 
-DATASET INFORMATION
-----------------------------------------------------------------------------------------------------
-Train set: 199365 samples, 384 frauds (0.19%)
-Val set:   42721 samples, 56 frauds (0.13%)
-Test set:  42721 samples, 52 frauds (0.12%)
-Imbalance ratio: 0.0019
-Inverse imbalance ratio: 518.18
+Train: 199365 rows, 384 frauds
+Val:   42721 rows, 56 frauds
+Test:  42721 rows, 52 frauds
 
-====================================================================================================
-COMPLETE RESULTS - ALL ENSEMBLE METHODS
-====================================================================================================
+                       Model Fit time (s) Score time (s) AUPRC AUC ROC Balanced Accuracy
+      Weighted XGBoost (w=5)        0.271          0.007 0.766   0.981             0.856
+     Weighted XGBoost (w=10)        0.272          0.006 0.763   0.981             0.875
+     Weighted XGBoost (w=50)        0.276          0.007 0.759   0.977             0.865
+    Weighted XGBoost (w=100)        0.281          0.007 0.756   0.980             0.875
+         Balanced RF (s=0.5)        0.432          0.016 0.751   0.977             0.893
+         Balanced RF (s=1.0)        0.426          0.016 0.747   0.983             0.900
+         Balanced RF (s=0.1)        0.454          0.016 0.743   0.979             0.865
+        Balanced RF (s=0.01)        0.949          0.015 0.727   0.974             0.846
+        Balanced RF (s=0.05)        0.500          0.016 0.727   0.956             0.865
+      Baseline Random Forest        2.548          0.016 0.715   0.960             0.750
+Weighted Logistic Regression        0.133          0.001 0.690   0.977             0.909
+Baseline Logistic Regression        0.106          0.002 0.646   0.967             0.769
+            Baseline XGBoost        0.279          0.006 0.566   0.883             0.827
+      Weighted XGBoost (w=1)        0.296          0.007 0.566   0.883             0.827
 
-                       Model Fit time (s) Score time (s) AUC ROC Average Precision Balanced Accuracy
-Baseline Logistic Regression        0.109          0.002   0.967             0.646             0.769
-      Baseline Random Forest        4.104          0.020   0.960             0.715             0.750
-            Baseline XGBoost        0.285          0.006   0.883             0.566             0.827
-        Balanced RF (s=0.01)        1.122          0.042   0.974             0.727             0.846
-        Balanced RF (s=0.05)        0.533          0.014   0.956             0.727             0.865
-         Balanced RF (s=0.1)        0.453          0.016   0.979             0.743             0.865
-         Balanced RF (s=0.5)        0.432          0.014   0.977             0.751             0.893
-         Balanced RF (s=1.0)        0.421          0.016   0.983             0.747             0.900
-      Weighted XGBoost (w=1)        0.283          0.006   0.883             0.566             0.827
-      Weighted XGBoost (w=5)        0.276          0.006   0.981             0.766             0.856
-     Weighted XGBoost (w=10)        0.303          0.006   0.981             0.763             0.875
-     Weighted XGBoost (w=50)        0.281          0.006   0.977             0.759             0.865
-    Weighted XGBoost (w=100)        0.289          0.006   0.980             0.756             0.875
-Weighted Logistic Regression        0.136          0.002   0.977             0.690             0.909
-
-====================================================================================================
-BASELINE MODELS COMPARISON
-====================================================================================================
-
-                       Model Fit time (s) Score time (s) AUC ROC Average Precision Balanced Accuracy
-Baseline Logistic Regression        0.109          0.002   0.967             0.646             0.769
-      Baseline Random Forest        4.104          0.020   0.960             0.715             0.750
-            Baseline XGBoost        0.285          0.006   0.883             0.566             0.827
-
-====================================================================================================
-RANDOM FOREST: BASELINE VS BALANCED
-====================================================================================================
-
-                 Model Fit time (s) Score time (s) AUC ROC Average Precision Balanced Accuracy
-Baseline Random Forest        4.104          0.020   0.960             0.715             0.750
-  Balanced RF (s=0.01)        1.122          0.042   0.974             0.727             0.846
-  Balanced RF (s=0.05)        0.533          0.014   0.956             0.727             0.865
-   Balanced RF (s=0.1)        0.453          0.016   0.979             0.743             0.865
-   Balanced RF (s=0.5)        0.432          0.014   0.977             0.751             0.893
-   Balanced RF (s=1.0)        0.421          0.016   0.983             0.747             0.900
-
-====================================================================================================
-XGBOOST: BASELINE VS WEIGHTED
-====================================================================================================
-
-                   Model Fit time (s) Score time (s) AUC ROC Average Precision Balanced Accuracy
-        Baseline XGBoost        0.285          0.006   0.883             0.566             0.827
-  Weighted XGBoost (w=1)        0.283          0.006   0.883             0.566             0.827
-  Weighted XGBoost (w=5)        0.276          0.006   0.981             0.766             0.856
- Weighted XGBoost (w=10)        0.303          0.006   0.981             0.763             0.875
- Weighted XGBoost (w=50)        0.281          0.006   0.977             0.759             0.865
-Weighted XGBoost (w=100)        0.289          0.006   0.980             0.756             0.875
-
-====================================================================================================
-LOGISTIC REGRESSION: BASELINE VS WEIGHTED
-====================================================================================================
-
-                       Model Fit time (s) Score time (s) AUC ROC Average Precision Balanced Accuracy
-Baseline Logistic Regression        0.109          0.002   0.967             0.646             0.769
-Weighted Logistic Regression        0.136          0.002   0.977             0.690             0.909
-
-====================================================================================================
-SUMMARY: BEST MODELS BY CATEGORY
-====================================================================================================
-
-             Category                        Model AUC ROC Average Precision Balanced Accuracy
-        Best Baseline Baseline Logistic Regression   0.967             0.646             0.769
-     Best Balanced RF          Balanced RF (s=1.0)   0.983             0.747             0.900
-Best Weighted XGBoost       Weighted XGBoost (w=5)   0.981             0.766             0.856
-          Weighted LR Weighted Logistic Regression   0.977             0.690             0.909
-
-====================================================================================================
-OVERALL BEST MODEL (BY AUC ROC)
-====================================================================================================
-
-Model: Balanced RF (s=1.0)
-AUC ROC: 0.983
-Average Precision: 0.747
-Balanced Accuracy: 0.900
-Fit time: 0.421s
-Score time: 0.016s
-
-====================================================================================================
-END OF REPORT
-====================================================================================================
+Best model by test AUPRC: Weighted XGBoost (w=5) (AUPRC=0.766, AUC ROC=0.981)
