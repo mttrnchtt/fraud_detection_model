@@ -3,8 +3,11 @@ metric computation, and MLP construction. Both packages import from here so they
 stay in sync.
 """
 
+import json
+from pathlib import Path
 from typing import Dict
 
+import joblib
 import numpy as np
 from sklearn.metrics import (
     accuracy_score,
@@ -126,3 +129,29 @@ def get_model_info(model: MLPClassifier) -> dict:
         "n_outputs_": getattr(model, "n_outputs_", None),
         "classes_": model.classes_.tolist() if hasattr(model, "classes_") else None,
     }
+
+
+def save_training_results(model, results, config, predictions=None):
+    """Persist the model, its metrics, and optionally predictions and a config copy."""
+    output_dir = Path(config["paths"]["output_dir"])
+    checkpoint_dir = Path(config["paths"]["checkpoint_dir"])
+    output_dir.mkdir(parents=True, exist_ok=True)
+    checkpoint_dir.mkdir(parents=True, exist_ok=True)
+
+    joblib.dump(model, checkpoint_dir / "model.joblib")
+    with open(output_dir / "training_results.json", "w") as f:
+        json.dump(results, f, indent=2)
+
+    if config["logging"]["save_predictions"] and predictions is not None:
+        pred_dir = Path(config["logging"]["predictions_path"])
+        pred_dir.mkdir(parents=True, exist_ok=True)
+        for name, arr in predictions.items():
+            np.save(pred_dir / f"{name}.npy", arr)
+
+    if config["logging"]["save_config_copy"]:
+        import yaml
+
+        with open(output_dir / "config_copy.yaml", "w") as f:
+            yaml.dump(config, f, default_flow_style=False, indent=2)
+
+    print(f"Saved model to {checkpoint_dir}/model.joblib and results to {output_dir}/training_results.json")

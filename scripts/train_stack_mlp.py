@@ -11,16 +11,10 @@ import copy
 import sys
 from pathlib import Path
 
-import yaml
-
+from fd.data_prep.utils import load_config
 from fd.stack_helpers.train import train_mlp_model, save_training_results
 from fd.mlp_helpers.eval import print_training_summary, evaluate_with_thresholds
 from fd.stack_helpers.utils import OPTIONS, load_all_data
-
-
-def load_config(path):
-    with open(path) as f:
-        return yaml.safe_load(f)
 
 
 def hyperparameter_tuning(config, option_cfg):

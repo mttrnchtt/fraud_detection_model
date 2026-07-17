@@ -59,23 +59,6 @@
                 ]
             }
         },
-        "evaluation": {
-            "metrics": [
-                "auroc",
-                "auprc",
-                "accuracy",
-                "precision",
-                "recall",
-                "f1"
-            ],
-            "default_threshold": 0.5,
-            "alt_thresholds": [
-                0.1,
-                0.25,
-                0.5
-            ],
-            "threshold_metric": "f1"
-        },
         "logging": {
             "save_predictions": true,
             "predictions_path": "outputs/isolation_forest/preds",

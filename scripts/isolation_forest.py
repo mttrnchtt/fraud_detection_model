@@ -13,21 +13,16 @@ from pathlib import Path
 
 import joblib
 import numpy as np
-import yaml
 from sklearn.ensemble import IsolationForest
 from sklearn.model_selection import ParameterSampler
 from sklearn.metrics import average_precision_score, roc_auc_score
 
 from fd.common import evaluate_with_thresholds
+from fd.data_prep.utils import load_config
 from fd.mlp_helpers.utils import load_all_data
 
 SKLEARN_KEYS = ("n_estimators", "contamination", "max_samples", "max_features",
                 "bootstrap", "n_jobs", "random_state")
-
-
-def load_config(path):
-    with open(path) as f:
-        return yaml.safe_load(f)
 
 
 def train_isolation_forest(config, X_train):
