@@ -149,7 +149,7 @@ per-entity aggregation features, graph models over shared entities, and sequence
 card's history. What works here is what the repo already does, a cost-sensitive tree ensemble with
 time-ordered validation, calibration, and a cost-based threshold. The stacking gain stays small.
 
-## What I would do next
+## What I think can be done next...
 
 - Choose the threshold on a slice of validation the meta-model was not trained on. Today the
   calibrator and the threshold are fit on the same validation window the meta-model learns from, so
